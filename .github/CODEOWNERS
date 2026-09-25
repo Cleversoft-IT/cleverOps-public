@@ -1,0 +1,5 @@
+# Le guardie di riservatezza richiedono la review di un maintainer (ruleset: code owner review).
+/.github/        @sepa85 @akkaz
+/.githooks/      @sepa85 @akkaz
+/scripts/        @sepa85 @akkaz
+/.gitleaks.toml  @sepa85 @akkaz

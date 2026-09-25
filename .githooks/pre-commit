@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Guardie prima di ogni commit: contenuti riservati e segreti nello stage.
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"
+node "$root/scripts/check-public.mjs" --staged
+gitleaks git --pre-commit --staged --redact --no-banner --ignore-gitleaks-allow \
+  --config "$root/.gitleaks.toml" --gitleaks-ignore-path "$root/.githooks" "$root"

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.mp3
+*.wav
+*.m4a
+*.mp4
+node_modules/
+package-lock.json

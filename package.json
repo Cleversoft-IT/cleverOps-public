@@ -1,0 +1,40 @@
+{
+  "name": "@cleversoft/cleverops",
+  "version": "0.1.0",
+  "description": "Skill e tool DevOps/AI di Cleversoft IT per Claude Code e Codex (Drupal, Ionic, workflow con Codex, trascrizione locale). Installer TUI.",
+  "type": "module",
+  "bin": {
+    "cleverops": "bin/cleverops.mjs"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "agents/",
+    "extras/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ink": "^5.1.0",
+    "react": "^18.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Cleversoft-IT/cleverOps-public.git"
+  },
+  "author": "Cleversoft IT (https://cleversoft.it)",
+  "keywords": [
+    "drupal",
+    "devops",
+    "ai",
+    "whisper",
+    "plan-auditor",
+    "claude-code",
+    "codex",
+    "skills"
+  ],
+  "license": "MIT",
+  "private": true
+}

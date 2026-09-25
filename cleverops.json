@@ -1,0 +1,18 @@
+{
+  "$schema": "./cleverops.schema.json",
+  "schemaVersion": 1,
+  "id": "public",
+  "visibility": "public",
+  "skills": {
+    "ddev-expert": { "category": "Drupal" },
+    "docker-local": { "category": "DevOps" },
+    "drupal-expert": { "category": "Drupal" },
+    "drupal-migration": { "category": "Drupal" },
+    "drupal-security": { "category": "Drupal" },
+    "ionic-skills": { "category": "Mobile" },
+    "plan-auditor": { "category": "Workflow", "targets": ["codex"] },
+    "subagent-dev-with-codex": { "category": "Workflow", "targets": ["claude"] },
+    "transcribe": { "category": "AI", "requires": { "path": "~/.whisper-env" } }
+  },
+  "agents": {}
+}

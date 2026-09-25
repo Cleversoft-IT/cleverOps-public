@@ -1,0 +1,26 @@
+# Regole di default di gitleaks + regole per dati personali/aziendali.
+# I nomi dei clienti NON stanno qui (questo file è pubblico): li controlla scripts/check-public.mjs
+# con una denylist esterna al repo. Nessuna allowlist: i commenti gitleaks:allow sono ignorati
+# (--ignore-gitleaks-allow) e .gitleaksignore non viene letto dal checkout.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cellulare-italiano"
+description = "Numero di cellulare italiano"
+regex = '''(?:^|[^\d.])((?:\+39[\s.-]?)?3\d{2}[\s.-]?\d{3}[\s.-]?\d{3,4})(?:[^\d.]|$)'''
+secretGroup = 1
+keywords = ["3"]
+
+[[rules]]
+id = "partita-iva"
+description = "Partita IVA italiana"
+regex = '''(?i)(?:p\.?\s?iva|partita\s+iva|\bvat\b)\W{0,5}((?:it)?\d{11})'''
+secretGroup = 1
+keywords = ["iva", "vat"]
+
+[[rules]]
+id = "email-cleversoft"
+description = "Indirizzo email aziendale"
+regex = '''(?i)[a-z0-9._%+-]+@cleversoft\.it'''
+keywords = ["cleversoft.it"]

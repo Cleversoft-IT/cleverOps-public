@@ -1,0 +1,87 @@
+# Guardie di riservatezza: devono passare prima di ogni merge su main (status check richiesti).
+# Sulle PR gli script e le configurazioni delle guardie si prendono SEMPRE dal commit base,
+# mai dalla PR: una PR non può ammorbidire i controlli che la valutano. Le modifiche a questo
+# workflow e agli script richiedono comunque la review di un code owner (.github/CODEOWNERS).
+name: guards
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  provenance:
+    name: provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Scanner fidato
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git show "${{ github.event.pull_request.base.sha }}:scripts/check-provenance.mjs" > "$RUNNER_TEMP/check-provenance.mjs"
+          else
+            cp scripts/check-provenance.mjs "$RUNNER_TEMP/check-provenance.mjs"
+          fi
+      - name: La storia discende solo dal seed
+        env:
+          SEED_SHA: ${{ vars.SEED_SHA }}
+        run: node "$RUNNER_TEMP/check-provenance.mjs" HEAD
+
+  public-guard:
+    name: public-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Scanner e asset ammessi fidati
+        run: |
+          ref="${{ github.event.pull_request.base.sha || github.sha }}"
+          git show "$ref:scripts/check-public.mjs" > "$RUNNER_TEMP/check-public.mjs"
+          git show "$ref:scripts/public-assets.json" > "$RUNNER_TEMP/public-assets.json"
+      # Sulle PR da fork il secret non esiste: lo scanner fallisce esplicitamente
+      # ("PR da fork: procedura sostitutiva"), quindi la PR originale resta bloccata.
+      - name: Contenuti riservati
+        env:
+          PUBLIC_GUARD_DENYLIST: ${{ secrets.PUBLIC_GUARD_DENYLIST }}
+          PUBLIC_GUARD_ASSETS: ${{ runner.temp }}/public-assets.json
+          BEFORE: ${{ github.event.before }}
+        run: |
+          scan="$RUNNER_TEMP/check-public.mjs"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node "$scan" --range "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          else
+            if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+              node "$scan" --range "$BEFORE" "${{ github.sha }}"
+            fi
+            node "$scan" --all
+          fi
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.0
+      GITLEAKS_SHA256: 79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Installa gitleaks (versione e checksum fissati)
+        run: |
+          f="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/$f" "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$f"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
+      - name: Segreti su tutta la storia
+        run: |
+          ref="${{ github.event.pull_request.base.sha || github.sha }}"
+          git show "$ref:.gitleaks.toml" > "$RUNNER_TEMP/gitleaks.toml"
+          mkdir -p "$RUNNER_TEMP/no-ignore"
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --ignore-gitleaks-allow \
+            --config "$RUNNER_TEMP/gitleaks.toml" --gitleaks-ignore-path "$RUNNER_TEMP/no-ignore" .

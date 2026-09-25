@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Guardie prima di ogni push: provenienza della storia, contenuti riservati, segreti.
+# Il controllo sui branch work/** è solo qui, in locale: GitHub non lo può imporre prima del push.
+set -euo pipefail
+remote="${1:-origin}"
+root="$(git rev-parse --show-toplevel)"
+zero=0000000000000000000000000000000000000000
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue   # cancellazione di un ref
+  case "$remote_ref" in
+    refs/tags/*) echo "✗ pre-push: i tag non si pubblicano da qui" >&2; status=1; continue ;;
+    refs/heads/main|refs/heads/work/*) ;;
+    *) echo "✗ pre-push: si pubblicano solo branch work/** (e main al bootstrap)" >&2; status=1; continue ;;
+  esac
+  node "$root/scripts/check-provenance.mjs" "$local_sha" || status=1
+  if [ "$remote_sha" = "$zero" ]; then
+    node "$root/scripts/check-public.mjs" --new "$local_sha" "$remote" || status=1
+    log_opts="$local_sha --not --remotes=$remote"
+  else
+    node "$root/scripts/check-public.mjs" --range "$remote_sha" "$local_sha" || status=1
+    log_opts="$remote_sha..$local_sha"
+  fi
+  gitleaks git --redact --no-banner --ignore-gitleaks-allow --config "$root/.gitleaks.toml" \
+    --gitleaks-ignore-path "$root/.githooks" --log-opts="$log_opts" "$root" || status=1
+done
+exit $status
