@@ -56,8 +56,12 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             node "$scan" --range "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
           else
-            if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            # primo push (before assente o nullo): tutti i commit raggiungibili, metadati compresi
+            if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+               && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
               node "$scan" --range "$BEFORE" "${{ github.sha }}"
+            else
+              node "$scan" --history "${{ github.sha }}"
             fi
             node "$scan" --all
           fi

@@ -6,6 +6,9 @@
 //   node scripts/check-public.mjs --range <base> <head>      commit in <base>..<head> (pre-push, CI)
 //   node scripts/check-public.mjs --new <head> [<remote>]    commit di <head> non presenti su <remote>
 //                                                            (default origin): branch nuovo
+//   node scripts/check-public.mjs --history <rev>            TUTTI i commit raggiungibili da <rev>
+//                                                            (primo push, CI senza "before")
+//   node scripts/check-public.mjs --name <testo>             un nome (es. branch) contro regole e denylist
 //
 // Per i commit si controllano autore, committer e messaggio, e il contenuto COMPLETO di ogni
 // file aggiunto o modificato (merge compresi, rispetto a ciascun genitore), non il diff.
@@ -190,8 +193,12 @@ if (mode === '--all') {
   git(['rev-list', `${a}..${b}`]).split('\n').filter(Boolean).forEach(checkCommit);
 } else if (mode === '--new' && a) {
   git(['rev-list', a, '--not', `--remotes=${b || 'origin'}`]).split('\n').filter(Boolean).forEach(checkCommit);
+} else if (mode === '--history' && a) {
+  git(['rev-list', a]).split('\n').filter(Boolean).forEach(checkCommit);
+} else if (mode === '--name' && a) {
+  checkPath(a, 'nome ');
 } else {
-  fail('uso: --all | --staged | --range <base> <head> | --new <head> [<remote>]');
+  fail('uso: --all | --staged | --range <base> <head> | --new <head> [<remote>] | --history <rev> | --name <testo>');
 }
 
 if (findings.size) {

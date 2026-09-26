@@ -2,6 +2,7 @@
 # Guardie prima di ogni commit: contenuti riservati e segreti nello stage.
 set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
+noignore="$(mktemp -d)"; trap 'rm -rf "$noignore"' EXIT   # nessun .gitleaksignore dal checkout
 node "$root/scripts/check-public.mjs" --staged
 gitleaks git --pre-commit --staged --redact --no-banner --ignore-gitleaks-allow \
-  --config "$root/.gitleaks.toml" --gitleaks-ignore-path "$root/.githooks" "$root"
+  --config "$root/.gitleaks.toml" --gitleaks-ignore-path "$noignore" "$root"
