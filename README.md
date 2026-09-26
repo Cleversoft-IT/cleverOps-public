@@ -24,10 +24,11 @@
 Serve Node ≥ 18. Dentro Claude Code (col `!` davanti per eseguirlo nella shell):
 
 ```bash
-! npx github:Cleversoft-IT/cleverOps-public
+! npx github:Cleversoft-IT/cleverOps-public --all --target claude,codex
 ```
 
-Parte una TUI: scegli dove installare, quali skill, confermi. Il pacchetto non è su npm:
+In un terminale interattivo, ometti i flag per scegliere skill e destinazioni nella TUI.
+Il pacchetto non è su npm:
 `npx` lo scarica direttamente da questo repo pubblico.
 
 | Voglio… | Comando |
@@ -52,7 +53,7 @@ Parte una TUI: scegli dove installare, quali skill, confermi. Il pacchetto non �
 | `transcribe` | Audio → testo con Whisper in locale |
 
 > Il repo è in riordino: le skill Drupal verranno sostituite da una suite `drupal11-*`
-> aggiornata, `ionic-skills` e l'installer vengono riscritti. Il catalogo sempre
+> aggiornata, `ionic-skills` viene riscritta. Il catalogo sempre
 > aggiornato è sul sito.
 
 ## Opzioni dell'installer
@@ -62,10 +63,17 @@ Parte una TUI: scegli dove installare, quali skill, confermi. Il pacchetto non �
 | `--target claude,codex,project` | dove installare (`project` → `<dir>/.claude/`) |
 | `--project PATH` | cartella del progetto (default: cwd) |
 | `--all` · `--skills a,b` | cosa installare |
-| `--copy` / `--link` | copia (default) o symlink (solo da un checkout git locale) |
+| `--copy` / `--from PATH --link` | copia (default) o symlink da una sorgente locale esplicita |
+| `--list [--json]` | catalogo delle sorgenti accessibili |
+| `--source ID` / `--no-private` | seleziona una sorgente o esclude il privato |
+| `--verbose` | mostra anche i motivi delle sorgenti saltate |
 | `--toolbelt` | installa i CLI consigliati (rg, fd, tree, ast-grep, gh) |
 | `--impeccable` | installa [impeccable](https://impeccable.style) (dipendenza esterna) |
 | `--ccstatusline` | installa la statusline [ccstatusline-gradient](https://github.com/akkaz/ccstatusline-gradient) |
+
+Le skill Codex sono installate in `~/.agents/skills`. `doctor` diagnostica senza
+scritture, `sync` riconcilia migrazioni e plugin, `uninstall` usa il registro offline.
+Vedi la [guida dell’installer](docs/installer.md) per cache, backup, agent e test.
 
 ## Struttura
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# ai-dev-toolbelt — installa il toolbelt CLI per coding agent:
+# cleverOps — installa il toolbelt CLI per coding agent:
 #   rg (ripgrep) · fd · tree · ast-grep · gh
 # Rileva brew / apt / dnf / pacman / cargo / npm e installa solo i mancanti.
 # Idempotente: rilanciabile senza danni.
 set -uo pipefail
+ERRORS=0
 
 info() { printf '\033[0;34m›\033[0m %s\n' "$1"; }
 ok()   { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
 warn() { printf '\033[0;33m!\033[0m %s\n' "$1"; }
-err()  { printf '\033[0;31m✗\033[0m %s\n' "$1"; }
+err()  { ERRORS=$((ERRORS + 1)); printf '\033[0;31m✗\033[0m %s\n' "$1"; }
 
 has() { command -v "$1" >/dev/null 2>&1; }
 
@@ -66,13 +67,13 @@ install_tree() {
 
 # --- ast-grep (binario: sg o ast-grep) ---
 install_astgrep() {
-  { has sg || has ast-grep; } && { ok "ast-grep già presente"; return; }
+  { has ast-grep || (has sg && sg --version 2>/dev/null | grep -qi ast-grep); } && { ok "ast-grep già presente"; return; }
   info "Installo ast-grep…"
   if [ "$PM" = brew ]; then brew install ast-grep
   elif has npm; then npm install -g @ast-grep/cli
   elif has cargo; then cargo install ast-grep
   fi
-  { has sg || has ast-grep; } && ok "ast-grep ok" || err "ast-grep: installa a mano (https://ast-grep.github.io)"
+  { has ast-grep || (has sg && sg --version 2>/dev/null | grep -qi ast-grep); } && ok "ast-grep ok" || err "ast-grep: installa a mano (https://ast-grep.github.io)"
 }
 
 # --- gh (GitHub CLI) ---
@@ -104,5 +105,9 @@ install_astgrep
 install_gh
 
 echo
+if [ "$ERRORS" -gt 0 ]; then
+  warn "Toolbelt incompleto: $ERRORS errori."
+  exit 1
+fi
 ok "Toolbelt completato. Verifica: rg --version; fd --version; tree --version; sg --version; gh --version"
 info "Lato design: la dipendenza esterna impeccable si installa con  npx impeccable install"

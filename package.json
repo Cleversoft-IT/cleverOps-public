@@ -11,14 +11,18 @@
     "skills/",
     "agents/",
     "extras/",
-    "README.md"
+    "README.md",
+    "cleverops.json",
+    "cleverops.schema.json",
+    "legacy-hashes.json"
   ],
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "ink": "^5.1.0",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "smol-toml": "^1.9.0"
   },
   "repository": {
     "type": "git",
@@ -36,5 +40,8 @@
     "skills"
   ],
   "license": "MIT",
-  "private": true
+  "private": true,
+  "scripts": {
+    "test": "node --test test/"
+  }
 }

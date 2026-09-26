@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "skills": {
+    "ddev-expert": [
+      "f99e1cb6252c1b3fdd2a2de13db87f3bdcc12718f2ceb2c2addb001f230498c1"
+    ],
+    "docker-local": [
+      "e424083ec776fc64a5a536d912432c63ed82b9caa1f52e7c689c2aa0f1fba1ee"
+    ],
+    "drupal-expert": [
+      "001c693637f6fa38591c906a6f61620fcdf7f6c9f7d65bba1981d933fe03e5db"
+    ],
+    "drupal-migration": [
+      "b6f12ab4320846c4897ce5fba54c237836e290b7163f33ed4e940df8f295e184"
+    ],
+    "drupal-security": [
+      "9ce65d2bff3b7a8ab7ca1c56411d7cb83a840bca3d6fe3cd9d51052f2f13591c"
+    ],
+    "drupal11-config-management": [
+      "87bd41366ea0f7e2649ef66d2b712fd704f903972e38da9e7ca508a8f7745638"
+    ],
+    "drupal11-devops-testing-security": [
+      "5e2103946c9d03c36ddfe53169f3947027d14eade1ed014732f12e3b9cbf37ad"
+    ],
+    "drupal11-frontend-theming": [
+      "8ee0250cd6ac9ef913d11eec02722e04625e89be3b3d86830c32d88d58b600a5"
+    ],
+    "drupal11-module-development": [
+      "0c29c9aa6f0ec523f234b0bf5554cfaac92a6e4d47f31242dc88979a41784571"
+    ],
+    "drupal11-performance-caching": [
+      "ae8d496f5aacfe0d340d9f6218e12da013c0d549116869377fb2f690d96aa343"
+    ],
+    "drupal11-views-and-queries": [
+      "b99c1cf6b7dc8cd4a6de1b87413a5c6f0a049b91884d3e5547478f3a4a489ed9"
+    ],
+    "frontend-design": [
+      "2bb2891e39413facb74f218832078ab0414e4fa7954243d6486920d557b248c4"
+    ],
+    "ionic-skills": [
+      "8d25e51111582bef7572d2248c116c1a25686fc12c1b8beb487e3aeb59a91e47"
+    ],
+    "plan-auditor": [
+      "9489374eb837911cc418aaa4bafa2b20b3b25c3c9dd2a779af2c2f88f7b83a64",
+      "c3c41a7e27ebaa4f5f9cc0672a0abf58269010ce82e5fa63d50ba05e974c7b9b"
+    ],
+    "subagent-dev-with-codex": [
+      "3584a712c33764bbfce82530b5526c8cd41c01efc7a57f22464819dcc6d62f0f"
+    ],
+    "transcribe": [
+      "3681c9750e94704b325ab2e5d0220bf9bdc6217cc1b5067eb2de7fe03f96b9c4",
+      "65c669275cc9d67568cc7d154e919211d3f0a0f04d3b154427420609738b9081",
+      "c9562b83917a18938c90d907a56c4036badebc136418a194e71700c565dd5dab",
+      "dfc0d177bf13a23e63d18575ba901b884bc319f65d625fc3007a7278ef583980",
+      "ffe3f4b5668103ec1d02bc6c2db59af95e2d4928709f25f9c8a567eb0e5a15ef"
+    ]
+  },
+  "agents": {}
+}
