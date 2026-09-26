@@ -13,6 +13,14 @@ const CODEX = '.agents/plugins/marketplace.json';
 const ok = result => assert.equal(result.status, 0, result.stderr || result.stdout);
 const run = (s, args) => captured(process.execPath, [SCRIPT, ...args], { cwd: s.root, env: s.env, timeout: 10000 });
 
+function assertCodexManifests(src, path) {
+  const portable = read(join(src, path, 'plugin.json'));
+  const legacy = read(join(src, path, '.codex-plugin/plugin.json'));
+  const { $schema, extensions, ...identity } = portable;
+  assert.equal($schema, 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json');
+  assert.deepEqual(legacy, { ...identity, skills: './skills/', interface: extensions['com.openai'].interface });
+}
+
 test('targets espliciti, default entrambi e soli elementi del manifest nei pacchetti', t => {
   const s = sandbox(t), src = fixture(s, 'public', {
     zeta: { category: 'Test', targets: ['codex'] },
@@ -59,7 +67,7 @@ test('targets espliciti, default entrambi e soli elementi del manifest nei pacch
     assert.deepEqual(ui.defaultPrompt, [`Usa la skill ${entry.name}.`]);
     assert(!Object.hasOwn(ui, 'capabilities'));
     assert.deepEqual(fs.readdirSync(join(src, entry.source.path, 'skills')), [entry.name]);
-    assert(!fs.existsSync(join(src, entry.source.path, '.codex-plugin')));
+    assertCodexManifests(src, entry.source.path);
   }
   assert(!fs.existsSync(join(src, 'plugins/beta/.codex-plugin')));
   assert(!fs.existsSync(join(src, 'plugins/beta/plugin.json')));
@@ -94,6 +102,7 @@ test('descrizioni da frontmatter e repository nei soli campi documentati', t => 
       assert.equal(plugin.repository, repository);
       assert.equal(plugin.extensions['com.openai'].interface.shortDescription, expected);
       assert.equal(plugin.extensions['com.openai'].interface.longDescription, full);
+      assertCodexManifests(src, 'plugins/alpha');
       assert(!Object.hasOwn(codex, 'description'));
       assert(!Object.hasOwn(codex.plugins[0], 'description'));
       assert(!Object.hasOwn(codex.plugins[0], 'repository'));
@@ -124,6 +133,7 @@ test('shortDescription entro 120 caratteri con ellissi e parole intere, longDesc
     assert.equal(ui.shortDescription, expected);
     assert([...ui.shortDescription].length <= 120);
     assert.equal(ui.longDescription, description);
+    assertCodexManifests(src, 'plugins/alpha');
   }
 });
 
@@ -167,10 +177,11 @@ test('--check non scrive e rileva cataloghi, versioni, contenuti e file obsoleti
   ok(run(s, [src]));
   assert.equal(read(catalog).plugins[0].version, '2.3.4');
   assert.equal(read(join(src, 'plugins/alpha/plugin.json')).version, '2.3.4');
+  assertCodexManifests(src, 'plugins/alpha');
   ok(run(s, [src, '--check']));
 });
 
-test('rigenerazione rimuove i manifest Codex legacy e conserva i payload', t => {
+test('rigenerazione riallinea entrambi i manifest Codex e conserva i payload', t => {
   const s = sandbox(t), src = fixture(s);
   generateMarketplace(src);
   fs.renameSync(join(src, 'plugins/alpha/plugin.json'), join(src, 'plugins/alpha/precedente.json'));
@@ -178,12 +189,31 @@ test('rigenerazione rimuove i manifest Codex legacy e conserva i payload', t => 
   const before = snapshot(join(src, 'plugins/alpha/skills'));
   assert.equal(generateMarketplace(src, { check: true }).ok, false);
   generateMarketplace(src);
-  assert(!fs.existsSync(join(src, 'plugins/alpha/.codex-plugin')));
+  assertCodexManifests(src, 'plugins/alpha');
   assert(!fs.existsSync(join(src, 'plugins/alpha/precedente.json')));
   assert(fs.existsSync(join(src, 'plugins/alpha/plugin.json')));
   assert.deepEqual(snapshot(join(src, 'plugins/alpha/skills')), before);
   assert.equal(generateMarketplace(src, { check: true }).ok, true);
+  fs.unlinkSync(join(src, 'plugins/alpha/.codex-plugin/plugin.json'));
+  assert.equal(generateMarketplace(src, { check: true }).ok, false);
+  generateMarketplace(src);
+  assertCodexManifests(src, 'plugins/alpha');
 });
+
+for (const id of ['public', 'internal']) {
+  test(`generatore ${id}: frontmatter con nome diverso rifiutato prima delle scritture`, t => {
+    const s = sandbox(t), src = fixture(s, id);
+    generateMarketplace(src);
+    write(join(src, 'skills/alpha/SKILL.md'), '---\nname: beta\ndescription: Fixture sintetica.\n---\n');
+    const before = snapshot(src);
+    assert.throws(() => buildMarketplace(src), /name diverso.*alpha/);
+    assert.throws(() => generateMarketplace(src), /name diverso.*alpha/);
+    assert.deepEqual(snapshot(src), before);
+    const result = run(s, [src]);
+    assert.equal(result.status, 1); assert.match(result.stderr, /name diverso.*alpha/);
+    assert.deepEqual(snapshot(src), before);
+  });
+}
 
 test('cambio targets e rimozione risorse eliminano i derivati non più necessari', t => {
   const s = sandbox(t), src = fixture(s, 'public', { alpha: { category: 'A' }, beta: { category: 'B' } });
@@ -256,6 +286,87 @@ function setEnabled(s, harness, id, enabled, project) {
 function diagnose(s, src, targets) {
   const result = s.run(['doctor', '--from', src, '--target', targets, '--json']); ok(result);
   return JSON.parse(result.stdout);
+}
+
+for (const harness of ['claude', 'codex']) for (const command of ['sync', 'install']) for (const linked of [false, true]) {
+  test(`legacy → plugin ${harness} via ${command}, ${linked ? 'link' : 'copia'} riconosciuta nei backup`, t => {
+    const s = sandbox(t), src = fixture(s, 'public', {
+      alpha: { category: 'Test', replaces: ['vecchia'] }, beta: { category: 'Test' },
+    });
+    generateMarketplace(src);
+    ok(s.run(['--from', src, '--skills', 'beta', '--target', 'claude,codex']));
+    const entries = () => read(s.registry).entries.sort((a, b) => a.dest.localeCompare(b.dest));
+    const registry = entries();
+    const dir = harness === 'claude' ? s.claude : join(s.env.CODEX_HOME, 'skills');
+    const old = join(dir, 'vecchia'), original = join(dir, 'originale');
+    write(join(linked ? original : old, 'SKILL.md'), 'Legacy sintetica riconosciuta.');
+    if (linked) fs.symlinkSync('originale', old);
+    json(join(src, 'legacy-hashes.json'), { schemaVersion: 1,
+      skills: { vecchia: [treeHash(old, { allowRootLink: true })] }, agents: {} });
+    const other = join(harness === 'claude' ? s.codex : s.claude, 'vecchia');
+    write(join(other, 'SKILL.md'), 'Legacy sintetica riconosciuta.');
+    const third = join(harness === 'claude' ? s.claude : s.codex, 'alpha');
+    write(join(third, 'SKILL.md'), 'Copia estranea non registrata.');
+    setEnabled(s, harness, 'alpha@cleverops-public', true);
+    const sourceBefore = snapshot(src), oldBefore = snapshot(linked ? original : old);
+    const args = [...(command === 'sync' ? ['sync'] : ['--skills', 'alpha']), '--from', src, '--target', harness];
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = s.run(args);
+      assert.equal(result.status, command === 'sync' ? 0 : 1, result.stderr);
+      if (command === 'install') assert.match(result.stderr, /rifiutata: plugin abilitato/);
+      assert.doesNotMatch(result.stderr, /Migrazione in attesa/);
+      assert(!fs.lstatSync(old, { throwIfNoEntry: false }));
+      assert.deepEqual(entries(), registry);
+      assert.equal(fs.readFileSync(join(third, 'SKILL.md'), 'utf8'), 'Copia estranea non registrata.');
+      assert(fs.existsSync(other));
+      const [entry] = backupEntries(s); assert.equal(backupEntries(s).length, 1); assert.equal(entry.path, old);
+      if (linked) {
+        assert.equal(entry.linkTarget, 'originale'); assert.equal(entry.resolved, original);
+        assert.deepEqual(snapshot(original), oldBefore);
+      } else assert.deepEqual(snapshot(join(entry.folder, entry.stored)), oldBefore);
+      assert.deepEqual(snapshot(src), sourceBefore);
+      assert.deepEqual(diagnose(s, src, harness).migrations, []);
+    }
+    // Restore mantiene la proprietà precedente e ricrea anche il target grezzo del link.
+    setEnabled(s, harness, 'alpha@cleverops-public', false);
+    ok(s.run(['restore', backupEntries(s)[0].folder]));
+    if (linked) assert.equal(fs.readlinkSync(old), 'originale');
+    else assert.deepEqual(snapshot(old), oldBefore);
+    assert.deepEqual(entries(), registry);
+  });
+}
+
+for (const harness of ['claude', 'codex']) {
+  test(`legacy → plugin ${harness}: servono tutte le sostitute della sorgente nello stesso harness`, t => {
+    const s = sandbox(t), src = fixture(s, 'public', {
+      alpha: { category: 'Test', replaces: ['vecchia'] }, beta: { category: 'Test', replaces: ['vecchia'] },
+    });
+    generateMarketplace(src);
+    const old = join(harness === 'claude' ? s.claude : s.codex, 'vecchia');
+    write(join(old, 'SKILL.md'), 'Legacy sintetica.');
+    const original = snapshot(old);
+    json(join(src, 'legacy-hashes.json'), { schemaVersion: 1, skills: { vecchia: [treeHash(old)] }, agents: {} });
+    // Il catalogo, un'altra sorgente e l'altro harness non soddisfano la sostituta.
+    setEnabled(s, harness === 'claude' ? 'codex' : 'claude', 'beta@cleverops-public', true);
+    for (const id of ['beta@cleverops-internal', 'beta@cleverops-public']) {
+      setEnabled(s, harness, id, false);
+      if (id.includes('internal')) setEnabled(s, harness, id, true);
+      const result = s.run(['--from', src, '--skills', 'alpha', '--target', harness]); ok(result);
+      assert.match(result.stderr, /Migrazione in attesa/);
+      assert.deepEqual(snapshot(old), original); assert.deepEqual(backupEntries(s), []);
+    }
+    setEnabled(s, harness, 'beta@cleverops-public', true);
+    ok(s.run(['--from', src, '--skills', 'alpha', '--target', harness]));
+    assert(!fs.existsSync(old));
+    assert.deepEqual(read(s.registry).entries.map(e => e.name), ['alpha']);
+    const [entry] = backupEntries(s); assert.equal(entry.path, old);
+    assert.deepEqual(snapshot(join(entry.folder, entry.stored)), original);
+    // Un hash ignoto resta intatto anche se entrambe le sostitute sono disponibili.
+    write(join(old, 'SKILL.md'), 'Modifica locale non riconosciuta.');
+    const unknown = snapshot(old), result = s.run(['sync', '--from', src, '--target', harness]); ok(result);
+    assert.match(result.stderr, /Migrazione dubbia/); assert.deepEqual(snapshot(old), unknown);
+    assert.equal(backupEntries(s).length, 1);
+  });
 }
 
 for (const source of ['public', 'internal']) for (const harness of ['claude', 'codex']) {

@@ -17,12 +17,12 @@ export async function gitEnvironment(env = process.env) {
   const safeEnv = { ...env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never',
     GIT_ASKPASS: '', SSH_ASKPASS: '' };
   let ssh = env.GIT_SSH_COMMAND;
-  // GIT_SSH indica un eseguibile, non una riga di shell: preserva anche gli spazi.
-  if (!ssh && env.GIT_SSH) ssh = `'${env.GIT_SSH.replace(/'/g, `'\\''`)}'`;
   if (!ssh) {
     try { ssh = await git(['config', '--get', 'core.sshCommand'], { env: safeEnv }); }
     catch { /* Nessun comando personalizzato. */ }
   }
+  // GIT_SSH segue core.sshCommand ed è un eseguibile: preserva spazi e apici.
+  if (!ssh && env.GIT_SSH) ssh = `'${env.GIT_SSH.replace(/'/g, `'\\''`)}'`;
   return { ...safeEnv, GIT_SSH_COMMAND: `${ssh || 'ssh'} -o BatchMode=yes -o ConnectTimeout=5` };
 }
 

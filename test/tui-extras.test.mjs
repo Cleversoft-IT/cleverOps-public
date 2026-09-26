@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { runWizard } from '../bin/tui.mjs';
 import { wizardInstall } from '../bin/cleverops.mjs';
+import { captured, CLI, sandbox, snapshot, write } from './helpers.mjs';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 test('TUI propaga il fallimento della callback di installazione', async () => {
@@ -43,3 +46,46 @@ test('wizard con soli extra: nessuna installazione e nessun target richiesto', (
   assert.deepEqual(wizardInstall(execute, {}, { skills: ['alpha'], agents: [], extras: [], targets: ['claude'] }), ['installato']);
   assert.equal(calls, 1);
 });
+
+test('wizard rifiuta la conferma vuota senza chiamare install', () => {
+  assert.throws(() => wizardInstall(() => assert.fail('install non deve partire'), {},
+    { skills: [], agents: [], extras: [], targets: [] }), error => error.exitCode === 2 && /Niente da installare/.test(error.message));
+});
+
+for (const extra of [true, false]) {
+  test(`CLI interattiva senza harness: ${extra ? 'solo extra riuscito' : 'selezione vuota rifiutata'}`, t => {
+    const s = sandbox(t), preload = join(s.root, 'terminale.cjs'), bin = join(s.root, 'bin'), log = join(s.root, 'extra.json');
+    write(join(bin, 'npx'), `#!${process.execPath}\nrequire('node:fs').writeFileSync(${JSON.stringify(log)}, JSON.stringify(process.argv.slice(2)));\n`);
+    fs.chmodSync(join(bin, 'npx'), 0o755);
+    // Terminale sintetico: gli input attendono le schermate, senza tempi di avvio fissi.
+    write(preload, `const { PassThrough } = require('node:stream');
+const stdin = new PassThrough();
+stdin.isTTY = true; stdin.setRawMode = () => {}; stdin.ref = () => {}; stdin.unref = () => {};
+Object.defineProperty(process, 'stdin', { value: stdin });
+process.stdout.isTTY = true; process.stdout.columns = 80; process.stdout.rows = 30;
+const steps = [['Quali skill installare?', ['\\r']], ['Extra — dipendenze esterne', ${JSON.stringify(extra ? [' ', '\r'] : ['\r'])}], ['Procedo?', ['\\r']]];
+const output = process.stdout.write.bind(process.stdout);
+let seen = '', step = 0;
+process.stdout.write = (chunk, ...args) => {
+  const result = output(chunk, ...args);
+  seen += chunk;
+  if (steps[step] && seen.includes(steps[step][0])) {
+    const inputs = steps[step++][1]; seen = '';
+    inputs.forEach((key, i) => setTimeout(() => stdin.write(key), 30 * (i + 1)));
+  }
+  return result;
+};
+`);
+    const before = snapshot(s.home);
+    const result = captured(process.execPath, ['--require', preload, CLI], {
+      cwd: s.root, env: { ...s.env, CI: 'false', PATH: `${bin}:${s.env.PATH}` }, timeout: 15000,
+    });
+    assert.equal(result.status, extra ? 0 : 2, result.stdout + result.stderr);
+    if (extra) {
+      assert(fs.existsSync(log), result.stdout + result.stderr);
+      assert.deepEqual(JSON.parse(fs.readFileSync(log, 'utf8')), ['-y', 'ccstatusline-gradient@latest', '--onboard']);
+    }
+    else { assert.match(result.stderr, /Niente da installare/); assert(!fs.existsSync(log)); }
+    assert.deepEqual(snapshot(s.home), before);
+  });
+}

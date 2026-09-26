@@ -192,7 +192,7 @@ export function install({ sources, items, selected, ...options }) {
         if (!fs.existsSync(required)) warn(`Prerequisito assente per ${item.name}: ${item.requires.path}`);
       }
     }
-    results.push(...applyMigrations(currentMigrations, registry, tx, options.project, warn));
+    results.push(...applyMigrations(currentMigrations, registry, tx, options.project, warn, pluginActive));
     return results;
   });
   return { messages, blocked: !options.sync && jobs.some(j => j.plugin) };

@@ -99,17 +99,29 @@ scripts/    guardie di riservatezza e provenienza (vedi sotto)
 ## Contribuire e sicurezza
 
 Questo repo è pubblico; il materiale aziendale vive in un repo privato separato.
+Le PR per conto dei maintainer vengono aperte e unite esclusivamente dall'agente
+(Claude/Codex): i maintainer umani descrivono la modifica all'agente e non devono
+gestire le PR. Per esempio: «Porta questa modifica nel pubblico, verifica guardie
+e test, ottieni una review locale da un modello diverso, apri la PR e uniscila
+quando tutti i check sono verdi». Una richiesta di sola preparazione locale non
+autorizza la pubblicazione.
+
+Le review incrociate si svolgono in locale tra modelli diversi, prima del merge. L'agente valuta e integra anche le proposte di Dependabot.
+
 Per evitare fughe di dati:
 
-- **Una volta per clone**, e di nuovo quando cambiano le guardie (gli hook lo segnalano):
+- **Una volta per clone del pubblico**, e di nuovo quando cambiano le guardie (gli hook lo segnalano):
   `bash scripts/setup-hooks.sh`. Installa gli hook `pre-commit` e `pre-push` in una copia
   fissa dentro `.git/`, attiva su qualunque branch (anche orphan), che eseguono `gitleaks`, `scripts/check-public.mjs` (contenuti riservati) e
   `scripts/check-provenance.mjs` (la storia deve discendere dal commit iniziale di questo
   repo). La denylist dei termini riservati è un file locale, mai committato.
+- **Nel clone privato**, eseguire il suo `bash scripts/setup-hooks.sh`: installa
+  soltanto gli hook gitleaks locali. Non copiarvi lo script pubblico, che include
+  denylist e provenienza specifiche del pubblico; seguire il README del privato.
 - **Branch di lavoro**: solo `work/**`; `main` accetta solo PR con i check `provenance`,
   `public-guard` e `gitleaks` verdi.
 - **PR da fork**: il check `public-guard` fallisce per scelta (non ha accesso alla
-  denylist). Un maintainer rivede la PR, la scansiona in locale e ne porta lo snapshot
+  denylist). L'agente per conto dei maintainer rivede la PR, la scansiona in locale e ne porta lo snapshot
   approvato su un branch `work/fork-<n>`: si integra quella PR, l'originale si chiude
   con un riferimento.
 - **Se qualcosa di riservato viene pubblicato per errore** è un incidente: cancellare il
@@ -196,6 +208,10 @@ Wrangler `4.141.0`, il workflow rifiuta `_worker.js`, `functions/` e `_routes.js
 nell'export; `_headers` e `_redirects` sono ammessi. `workflow_run` si attiva quando
 il workflow è presente sul branch predefinito: il primo collaudo remoto avviene
 dopo l'integrazione su `main` e la configurazione dei secret.
+
+Gli header escludono dall'indicizzazione sia `cleverops.pages.dev` sia i suoi
+sottodomini di anteprima (branch `pr-N` e deployment); il dominio canonico
+`cleverops.cleversoft.it` resta escluso dalla regola `noindex`.
 
 ## Licenza
 

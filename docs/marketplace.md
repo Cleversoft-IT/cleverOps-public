@@ -22,6 +22,7 @@ plugins/
   README.md                         # marker della directory generata
   drupal-local-env/
     plugin.json                      # formato portabile per le skill Codex
+    .codex-plugin/plugin.json         # fallback Codex con interface al primo livello
     skills/drupal-local-env/
       SKILL.md
       references/...
@@ -45,15 +46,25 @@ con esempi completi in [4], “Create a plugin manually”, “Plugin structure�
 `skills/` viene scoperta automaticamente: non serve un campo `skills`.
 `defaultPrompt` è un array di una stringa, come nell'esempio di “Add
 OpenAI-specific metadata”; `capabilities` è omesso perché non necessario.
-La rigenerazione elimina i vecchi `.codex-plugin/plugin.json`, mantenuti dagli
-host solo come fallback. Non servono manifest Claude duplicati, hook o MCP.
+Per ogni plugin destinato a Codex generiamo anche `.codex-plugin/plugin.json`,
+nel formato legacy con `interface` al primo livello e `skills: "./skills/"`
+(percorso relativo alla radice del plugin). Identità, versione, descrizione,
+autore, repository e campi dell'interfaccia derivano dagli stessi dati, così
+i due manifest restano coerenti. Il portabile resta il formato raccomandato;
+il secondo serve ai client che usano il fallback di compatibilità.
+Secondo [4], se `extensions.com.openai` è presente prevale sull'overlay legacy:
+i due oggetti non vengono fusi. I target dei cataloghi restano invariati e i
+plugin solo Claude non ricevono manifest Codex. Non servono manifest Claude
+duplicati, hook o MCP.
 Vedi anche [1], [2].
 
 La descrizione del marketplace Claude proviene da `package.json.description`
 (con una descrizione generica se assente), secondo [2], “Top-level fields”.
 Per ogni skill, `parseFrontmatter` di `scripts/validate-skills.mjs` legge la
-description di `SKILL.md`: la prima frase diventa la descrizione dell'entry
-Claude e del manifest Codex. In Codex `shortDescription` usa quella frase,
+description di `SKILL.md` e verifica che `name` coincida con la cartella/manifest
+prima di scrivere qualunque output, anche usando il generatore sul privato.
+La prima frase diventa la descrizione dell'entry Claude e dei due manifest Codex.
+In Codex `shortDescription` usa quella frase,
 abbreviata a un massimo di 120 caratteri al confine di parola con `…` se tagliata;
 se una singola parola supera il limite, il taglio rispetta i caratteri Unicode.
 `longDescription` conserva l'intera description del frontmatter.
@@ -63,7 +74,7 @@ percorsi non la interrompono. Per gli agent Claude resta la descrizione
 nome/categoria, perché non hanno un `SKILL.md`.
 
 `repository` proviene dalla stringa o da `repository.url` di `package.json`,
-se presente: va nelle entry Claude e nel manifest portabile Codex, dove è
+se presente: va nelle entry Claude e in entrambi i manifest Codex, dove è
 documentato. Il catalogo Codex continua a contenere solo i campi previsti da
 “Marketplace metadata”; descrizioni e repository risiedono nel plugin.
 Fonti: [2], “Plugin entries” e “Fields”; [4], “Manifest fields”.
@@ -117,8 +128,9 @@ per ogni plugin desiderato; il solo `marketplace add` non installa le skill.
    npx github:Cleversoft-IT/cleverOps-public doctor --source public --target claude
    ```
 
-   `sync` è obbligatorio: rimuove solo le copie registrate coperte dai plugin
+   `sync` è obbligatorio: rimuove le copie registrate coperte dai plugin
    abilitati per Claude, salvando quelle modificate nei backup dell'installer.
+   Le legacy riconosciute seguono la procedura descritta sotto.
    Le altre skill e le installazioni Codex rimangono sul proprio canale.
 
 3. Dopo un `doctor` pulito, aprire una **nuova sessione** Claude e provare
@@ -194,6 +206,24 @@ quella occorre un plugin abilitato nello scope utente e `sync --target claude`.
 5. Dopo un `doctor` pulito, avviare una **nuova sessione** Codex. Usare `/skills`
    o `$` per verificare disponibilità e assenza di doppioni. Gli agent Codex
    eventualmente installati restano file TOML.
+
+## Da legacy a plugin
+
+Per entrambi gli harness, se una legacy ha un hash noto e tutte le sue sostitute
+sono disponibili, `sync` completa la migrazione anche quando una sostituta è già
+un plugin attivo. L'abilitazione deve corrispondere a sorgente, harness e scope
+della legacy, secondo i settings/config usati per il cambio canale. Il solo
+catalogo o la cache non bastano; le altre sostitute possono essere file registrati
+integri. Per esempio, `transcribe` riconosciuta può migrare direttamente al plugin
+`transcribe-local@cleverops-public` abilitato sullo stesso harness.
+
+La legacy viene conservata nei backup dello stato con un manifest per `restore`;
+per i link si conservano target grezzo e percorso risolto. Il registro non prende
+in carico il plugin né eventuali copie estranee. Una legacy modificata o ignota
+rimane al suo posto con un avviso; l'altro harness e gli altri scope restano
+indipendenti. Anche install esegue questa riconciliazione, ma continua a restituire
+exit 1 se la selezione richiede una copia già coperta da un plugin attivo.
+Usare `sync` per completare il cambio canale, poi `doctor` e una nuova sessione.
 
 ## Da plugin a file
 
@@ -315,14 +345,14 @@ l'installer e funziona anche quando lo script è invocato tramite symlink.
 compresi payload e manifest per plugin. Gli argomenti errati producono exit 2.
 Il job `skills` di `.github/workflows/ci.yml` esegue `npm run marketplace:check`
 senza `npm ci`: generatore e parser usano solo Node. `npm test` verifica anche
-risorse pubbliche reali, formato portabile, descrizioni, migrazione dei manifest
-legacy, invocazione tramite symlink e packaging senza `plugins/`.
+risorse pubbliche reali, coerenza dei manifest portabile/legacy, descrizioni,
+ripristino dei manifest mancanti, invocazione tramite symlink e packaging senza `plugins/`.
 
 Per ogni rilascio che cambia una risorsa, incrementare `version` nel
 `package.json` **di quel repository**, rigenerare e includere tutti i derivati
 nel rilascio. Tutti i plugin della sorgente condividono quella versione:
 si evita una gestione manuale di versioni per skill. Nel catalogo Claude
-`version` sta nell'entry; per Codex nel `plugin.json` alla radice del plugin.
+`version` sta nell'entry; per Codex in entrambi i manifest del plugin.
 Non viene duplicata in un manifest Claude. Modificare soltanto gli originali senza rigenerare lascia
 vecchi contenuti nei pacchetti; rigenerare senza bump può lasciare la cache
 Claude sulla vecchia versione. Vedi [6], “Release a new version”.

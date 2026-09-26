@@ -1,0 +1,20 @@
+{
+  "name": "transcribe-local",
+  "version": "0.2.1",
+  "description": "Trascrizione offline/locale di file audio (mp3, wav, m4a, mp4...) con Whisper, senza servizi esterni né chiavi API — ripulendo e formattando il risultato in paragrafi leggibili.",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "transcribe-local",
+    "shortDescription": "Trascrizione offline/locale di file audio (mp3, wav, m4a, mp4...) con Whisper, senza servizi esterni né chiavi API —…",
+    "longDescription": "Trascrizione offline/locale di file audio (mp3, wav, m4a, mp4...) con Whisper, senza servizi esterni né chiavi API — ripulendo e formattando il risultato in paragrafi leggibili. Usa quando l'utente vuole trascrivere un audio generico, una nota vocale o un video: per le riunioni del team, se disponibile, usa invece transcribe-pro.",
+    "developerName": "Cleversoft IT",
+    "category": "AI",
+    "defaultPrompt": [
+      "Usa la skill transcribe-local."
+    ]
+  }
+}

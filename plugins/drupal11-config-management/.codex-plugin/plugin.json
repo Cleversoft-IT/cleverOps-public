@@ -1,0 +1,20 @@
+{
+  "name": "drupal11-config-management",
+  "version": "0.2.1",
+  "description": "Use when working with Drupal 11 Configuration Management — drush cex/cim/cget/cset/cdel, config/sync directory, site UUID errors, config_split, config_ignore, config_readonly, recipes (drush recipe / vendor/bin/dr recipe:apply), default content and content:export, settings.php $config[...] overrides, config/install vs config/optional, *.schema.yml, strictConfigSchema test failures.",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "drupal11-config-management",
+    "shortDescription": "Use when working with Drupal 11 Configuration Management — drush cex/cim/cget/cset/cdel, config/sync directory, site…",
+    "longDescription": "Use when working with Drupal 11 Configuration Management — drush cex/cim/cget/cset/cdel, config/sync directory, site UUID errors, config_split, config_ignore, config_readonly, recipes (drush recipe / vendor/bin/dr recipe:apply), default content and content:export, settings.php $config[...] overrides, config/install vs config/optional, *.schema.yml, strictConfigSchema test failures. Use when deciding how to differentiate config across environments (dev/staging/prod).",
+    "developerName": "Cleversoft IT",
+    "category": "Drupal",
+    "defaultPrompt": [
+      "Usa la skill drupal11-config-management."
+    ]
+  }
+}

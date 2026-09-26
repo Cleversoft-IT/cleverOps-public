@@ -12,3 +12,7 @@
 # Il dominio canonico è cleverops.cleversoft.it: la copia su pages.dev non va indicizzata.
 https://cleverops.pages.dev/*
   X-Robots-Tag: noindex
+
+# Anteprime di branch e deployment: una sola componente del nome host variabile.
+https://:preview.cleverops.pages.dev/*
+  X-Robots-Tag: noindex

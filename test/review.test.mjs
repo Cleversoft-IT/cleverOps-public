@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { join } from 'node:path';
 import { treeHash } from '../bin/lib/treehash.mjs';
-import { Transaction, restoreBackup } from '../bin/lib/registry.mjs';
-import { sandbox, fixture, bareSource, write, json, read, snapshot, backupEntries } from './helpers.mjs';
+import { Transaction, restoreBackup, withRegistry } from '../bin/lib/registry.mjs';
+import { sandbox, fixture, bareSource, write, json, read, snapshot, backupEntries, captured, ROOT } from './helpers.mjs';
 
 const ok = r => assert.equal(r.status, 0, r.stderr || r.stdout);
 function inEnvironment(s, fn) {
@@ -126,6 +126,101 @@ test('rollback fallito conserva un manifest utilizzabile per restore', t => {
     assert.equal(manifest.entries.length, 1); assert.equal(manifest.entries[0].path, dest);
     restoreBackup(tx.backupDir); assert.equal(fs.readFileSync(dest, 'utf8'), 'da recuperare');
   });
+});
+
+for (const backup of [true, false]) {
+  test(`EXDEV con rimozione parziale: rollback conserva la copia completa (backup=${backup})`, t => {
+    const s = sandbox(t), src = fixture(s), dest = join(s.claude, 'alpha');
+    ok(s.run(['--from', src, '--all', '--target', 'claude']));
+    write(join(dest, 'a'), 'primo'); write(join(dest, 'b'), 'secondo');
+    const original = snapshot(dest), registry = fs.readFileSync(s.registry, 'utf8');
+    inEnvironment(s, () => {
+      const rename = fs.renameSync, rm = fs.rmSync;
+      let saved;
+      fs.renameSync = (from, to) => {
+        if (from === dest) { saved = to; throw Object.assign(new Error('filesystem diversi'), { code: 'EXDEV' }); }
+        return rename(from, to);
+      };
+      fs.rmSync = (path, options) => {
+        if (path === dest) {
+          rm(join(dest, 'a'));
+          throw Object.assign(new Error('rimozione parziale sintetica'), { code: 'EACCES' });
+        }
+        return rm(path, options);
+      };
+      try {
+        assert.throws(() => withRegistry((data, tx) => {
+          data.entries = [];
+          tx.replace(dest, tmp => write(join(tmp, 'SKILL.md'), 'nuovo'), backup);
+        }), error => {
+          assert.match(error.message, /rimozione parziale sintetica/);
+          assert.match(error.message, /Rollback incompleto/);
+          assert(error.message.includes(`conservato in ${saved}`));
+          return true;
+        });
+      } finally { fs.renameSync = rename; fs.rmSync = rm; }
+      assert.deepEqual(snapshot(saved), original);
+      assert.equal(fs.readFileSync(join(dest, 'b'), 'utf8'), 'secondo');
+      assert.equal(fs.readFileSync(s.registry, 'utf8'), registry);
+      assert(!fs.existsSync(join(s.state, 'installed.lock')));
+      assert(!Object.values(snapshot(s.home)).includes(Buffer.from('nuovo').toString('base64')));
+      if (backup) {
+        const [entry] = backupEntries(s);
+        assert.equal(entry.path, dest); assert.equal(join(entry.folder, entry.stored), saved);
+        fs.rmSync(dest, { recursive: true });
+        restoreBackup(entry.folder);
+        assert.deepEqual(snapshot(dest), original);
+        assert.equal(fs.readFileSync(s.registry, 'utf8'), registry);
+      }
+    });
+  });
+}
+
+test('guardia pubblica: payload privati dei plugin vietati in pre-commit e pre-push', t => {
+  const s = sandbox(t), repo = join(s.root, 'guard-fixture');
+  const denied = [
+    'skills/transcribe-pro/SKILL.md',
+    'skills/cleversoft-design-system/SKILL.md',
+    'skills/frontend-design/SKILL.md',
+    'agents/assistente.md',
+    'plugins/contenitore/skills/transcribe-pro/SKILL.md',
+    'skills/cleverops-maintainer/SKILL.md',
+    'plugins/cleverops-maintainer/skills/cleverops-maintainer/SKILL.md',
+    'plugins/transcribe-pro/skills/transcribe-pro/SKILL.md',
+    'plugins/transcribe-pro/skills/innocua/SKILL.md',
+    'plugins/transcribe-pro/plugin.json',
+    'plugins/contenitore/skills/cleversoft-design/SKILL.md',
+    'plugins/contenitore/skills/cleversoft-design-system/SKILL.md',
+    'plugins/cleversoft-design-system/plugin.json',
+    'plugins/cleversoft-design-system/skills/cleversoft-design-system/SKILL.md',
+    'plugins/cleversoft-design-legacy/README.md',
+    'plugins/contenitore/agents/assistente.md',
+    'plugins/contenitore/agents/assistente.toml',
+  ];
+  const allowed = [
+    'plugins/transcribe-local/skills/transcribe-local/SKILL.md',
+    'plugins/drupal11-module-development/plugin.json',
+    'plugins/transcribe-pro-example/skills/alpha/SKILL.md',
+    'plugins/contenitore/skills/transcribe-pro-example/SKILL.md',
+    'docs/plugins/transcribe-pro.md',
+  ];
+  for (const path of allowed) write(join(repo, path), 'Fixture pubblica sintetica.');
+  s.git(repo, ['init', '-b', 'main']); s.git(repo, ['add', '.']);
+  // Oggetti Git solo nella sandbox: nessun commit o ref nel repository reale.
+  const base = s.git(repo, ['commit-tree', s.git(repo, ['write-tree']), '-m', 'Fixture pubblica']);
+  const guard = args => captured(process.execPath, [join(ROOT, 'scripts/check-public.mjs'), ...args], {
+    cwd: repo, env: { ...s.env, PUBLIC_GUARD_DENYLIST: 'termine-sintetico-vietato' }, timeout: 10000,
+  });
+  ok(guard(['--staged'])); ok(guard(['--history', base]));
+  for (const path of denied) write(join(repo, path), 'Fixture pubblica sintetica.');
+  s.git(repo, ['add', '.']);
+  const head = s.git(repo, ['commit-tree', s.git(repo, ['write-tree']), '-p', base, '-m', 'Fixture percorsi']);
+  for (const args of [['--staged'], ['--range', base, head], ['--new', head]]) {
+    const result = guard(args);
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    for (const path of denied) assert(result.stderr.includes(`${path}: percorso vietato`), `${args[0]}: ${path}`);
+    for (const path of allowed) assert(!result.stderr.includes(path), `${args[0]}: ${path}`);
+  }
 });
 
 test('restore CLI offline ricrea link identici e rifiuta destinazioni occupate prima di scrivere', t => {

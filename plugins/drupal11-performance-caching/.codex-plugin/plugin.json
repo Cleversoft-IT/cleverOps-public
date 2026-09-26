@@ -1,0 +1,20 @@
+{
+  "name": "drupal11-performance-caching",
+  "version": "0.2.1",
+  "description": "Use when working on Drupal 11 cache metadata (tags / contexts / max-age), render array cacheability, lazy builders, BigPipe, page_cache vs dynamic_page_cache, Cache API, Redis or Memcache backends, CacheableResponse, TrustedCallbackInterface.",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "drupal11-performance-caching",
+    "shortDescription": "Use when working on Drupal 11 cache metadata (tags / contexts / max-age), render array cacheability, lazy builders,…",
+    "longDescription": "Use when working on Drupal 11 cache metadata (tags / contexts / max-age), render array cacheability, lazy builders, BigPipe, page_cache vs dynamic_page_cache, Cache API, Redis or Memcache backends, CacheableResponse, TrustedCallbackInterface. Use when symptoms are users seeing each other's data, cache not invalidating, high TTFB, or stale content. Use when reviewing cache metadata on a render array.",
+    "developerName": "Cleversoft IT",
+    "category": "Drupal",
+    "defaultPrompt": [
+      "Usa la skill drupal11-performance-caching."
+    ]
+  }
+}

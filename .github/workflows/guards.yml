@@ -1,7 +1,7 @@
 # Guardie di riservatezza: devono passare prima di ogni merge su main (status check richiesti).
 # Sulle PR gli script e le configurazioni delle guardie si prendono SEMPRE dal commit base,
 # mai dalla PR: una PR non può ammorbidire i controlli che la valutano. Le modifiche a questo
-# workflow e agli script richiedono comunque la review di un code owner (.github/CODEOWNERS).
+# workflow e agli script ricevono una review incrociata locale tra modelli diversi.
 name: guards
 
 on:

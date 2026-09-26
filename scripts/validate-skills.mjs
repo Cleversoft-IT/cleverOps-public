@@ -9,7 +9,7 @@ import { isEntryPoint } from '../bin/lib/entry.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KEYS = new Set(['name', 'description', 'license', 'compatibility', 'allowed-tools', 'metadata']);
-const FIXED_PATH = /\.(?:claude|agents|codex)[/\\]skills\b|\$\{(?:CLAUDE_CONFIG_DIR|CODEX_HOME)[^}]*\}[/\\]skills\b/g;
+const FIXED_PATH = /\.(?:claude|agents|codex)[/\\]skills\b|\$(?:\{(?:CLAUDE_CONFIG_DIR|CODEX_HOME)[^}]*\}|(?:CLAUDE_CONFIG_DIR|CODEX_HOME))[/\\]skills\b/g;
 const fail = message => { throw new Error(message); };
 
 // Sottoinsieme YAML intenzionale: stringhe, blocchi |/>, lista di strumenti,
