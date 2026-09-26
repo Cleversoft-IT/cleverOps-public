@@ -1,6 +1,6 @@
 // Toolbelt CLI consigliato per coding agent + dipendenze esterne (es. impeccable).
-// Curato a mano: sono binari, non skill del repo. La skill `ai-dev-toolbelt`
-// documenta gli stessi tool e include lo script d'installazione cross-OS.
+// Curato a mano: sono binari, non skill del repo.
+// Lo script cross-OS è in extras/toolbelt/install.sh.
 
 export type Tool = {
   bin: string;

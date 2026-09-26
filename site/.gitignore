@@ -5,8 +5,9 @@
 next-env.d.ts
 *.tsbuildinfo
 .vercel
+.wrangler
 .env*.local
 # output di impeccable (snapshot critique, live config): non è sorgente
 /.impeccable
-# data/skills.generated.json è committato come fallback per deploy da sottocartella
-# (CLI Vercel da site/): viene comunque rigenerato da predev/prebuild quando ../skills c'è.
+# generato da scripts/generate-skills.mjs (predev/prebuild/pretypecheck): non è sorgente
+/data/skills.generated.json

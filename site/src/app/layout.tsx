@@ -1,23 +1,30 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { offerLabel } from "@/lib/skills";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// DM Sans variabile (asse wght, sottoinsieme latin) servita da file locale: il build non
+// scarica nulla da Google Fonts. File e licenza OFL in src/fonts/ (vedi DMSans-OFL.txt).
+const dmSans = localFont({
+  src: "../fonts/dm-sans-latin-wght-normal.woff2",
+  weight: "100 1000",
+  style: "normal",
+  display: "swap",
   variable: "--font-dm-sans",
 });
 
+const title = `cleverOps — ${offerLabel} per Claude Code e Codex`;
+
 export const metadata: Metadata = {
-  title: "cleverOps — skill, agent e tool per Claude Code e Codex",
+  title,
   description:
     "Le skill, i tool e l'installer che il team Cleversoft usa ogni giorno con Claude Code e Codex. Comandi copia-incolla.",
   metadataBase: new URL("https://cleverops.cleversoft.it"),
   openGraph: {
-    title: "cleverOps — skill, agent e tool per Claude Code e Codex",
+    title,
     description:
       "Skill, toolbelt e installer per Claude Code e Codex, open source da Cleversoft IT.",
     locale: "it_IT",

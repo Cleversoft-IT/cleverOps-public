@@ -32,16 +32,22 @@ export function CommandBlock({
     } catch {}
   }
 
-  const tones: Record<Tone, { box: string; code: string; muted: string }> = {
+  // accent: coral per testo e icone. Su fondo chiaro la variante scura (brand-ink, ≥4.5:1),
+  // sul blocco scuro il coral pieno, che lì supera già 5:1.
+  const tones: Record<Tone, { box: string; code: string; muted: string; accent: string; hover: string }> = {
     default: {
       box: "border-[var(--border)] bg-[var(--background)]",
       code: "text-[var(--card-foreground)]",
       muted: "text-[var(--muted-foreground)]",
+      accent: "text-brand-ink",
+      hover: "hover:text-brand-ink",
     },
     dark: {
       box: "border-[var(--zinc-800)] bg-[var(--zinc-900)]",
       code: "text-[var(--zinc-200)]",
       muted: "text-[var(--zinc-500)]",
+      accent: "text-brand",
+      hover: "hover:text-brand",
     },
   };
   const t = tones[tone];
@@ -53,7 +59,8 @@ export function CommandBlock({
   const s = sizes[size];
 
   // Con `emphasize`: boilerplate in muted, token evidenziato in colore pieno + semibold.
-  const idx = emphasize ? command.indexOf(emphasize) : -1;
+  // lastIndexOf: il token evidenziato (nome skill/agent, flag) sta in fondo al comando.
+  const idx = emphasize ? command.lastIndexOf(emphasize) : -1;
   const codeContent =
     idx >= 0 && emphasize ? (
       <>
@@ -67,7 +74,7 @@ export function CommandBlock({
 
   return (
     <div className={`flex items-start gap-2.5 rounded-md border ${s.pad} ${t.box} ${className}`}>
-      <span className={`select-none pt-px font-mono font-medium text-brand ${s.code}`} aria-hidden>
+      <span className={`select-none pt-px font-mono font-medium ${t.accent} ${s.code}`} aria-hidden>
         {prefix}
       </span>
       {/* Comando completo: wrappa su più righe, niente scroll orizzontale */}
@@ -78,9 +85,9 @@ export function CommandBlock({
         type="button"
         onClick={copy}
         aria-label={copied ? "Comando copiato" : "Copia comando"}
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-[var(--muted-foreground)] transition-colors hover:text-brand"
+        className={`grid h-9 w-9 shrink-0 place-items-center rounded-md ${t.muted} transition-colors ${t.hover}`}
       >
-        {copied ? <Check className="h-4 w-4 text-brand" /> : <Copy className="h-4 w-4" />}
+        {copied ? <Check className={`h-4 w-4 ${t.accent}`} /> : <Copy className="h-4 w-4" />}
       </button>
     </div>
   );

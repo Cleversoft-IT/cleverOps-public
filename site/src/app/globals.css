@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Cleversoft Design System — token (vedi skills/cleversoft-design-system)
+   Cleversoft Design System — token
    Brand coral, scala zinc, Geist Mono + DM Sans.
    ============================================================ */
 @theme inline {
@@ -18,6 +18,7 @@
   --color-brand: var(--brand);
   --color-brand-light: var(--brand-light);
   --color-brand-dark: var(--brand-dark);
+  --color-brand-ink: var(--brand-ink);
 
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -34,6 +35,10 @@
   --brand: #ff4017;
   --brand-light: #ff6640;
   --brand-dark: #e63610;
+  /* Coral per il TESTO su superfici chiare: stessa tinta del brand (oklch h≈33) ma più
+     scuro, ≥4.5:1 (WCAG AA) su #fff, #f0f0f0 e sulle chip bg-brand/10. Il coral pieno
+     (#ff4017, ~3.5:1 sul bianco) resta per fondi, bordi, logo e superfici scure. */
+  --brand-ink: #bd2703;
   --radius: 0.625rem;
 
   --background: #f0f0f0;
@@ -65,6 +70,7 @@
   --brand: #ff5a33;
   --brand-light: #ff7a5a;
   --brand-dark: #e04020;
+  --brand-ink: #ff5a33; /* sul fondo scuro il coral chiaro supera già 5:1 */
 
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);

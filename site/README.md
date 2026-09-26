@@ -1,44 +1,79 @@
 # cleverOps — sito
 
-Mini-sito vetrina delle skill/agent DevOps·AI di Cleversoft, costruito col design system
-`cleversoft-design-system`. Next.js 16 + Tailwind 4.
+Sito vetrina del catalogo cleverOps: Next.js 16 con **export statico** + Tailwind 4,
+pubblicato su **Cloudflare Pages** all'indirizzo <https://cleverops.cleversoft.it>.
+Non c'è alcun server: `next build` produce HTML, CSS e JS in `out/`.
+
+## Da dove arrivano i dati
 
 Il catalogo è **generato dai manifest veri**: `scripts/generate-skills.mjs` legge
-`../skills/*/SKILL.md` e `../agents/*.md` e scrive `data/skills.generated.json`
-(eseguito in automatico da `predev` / `prebuild`).
+`../cleverops.json` (contratto in [`../docs/manifest.md`](../docs/manifest.md)), le
+`../skills/*/SKILL.md` e gli eventuali `../agents/*.md`, e scrive `data/skills.generated.json`.
+
+- Entrano solo le voci con visibilità `public`.
+- Categoria, harness (`targets`) e stato `legacy` vengono dal manifest; nome e descrizione dal
+  frontmatter YAML delle skill.
+- Il repository mostrato nei comandi (`npx github:<owner>/<repo>`) viene da `repository.url` del
+  `package.json` alla radice.
+- Il manifest viene validato per intero contro il contratto (`schemaVersion`, `id`, `visibility`,
+  `skills`/`agents`, `category`, `targets`, `legacy`, `replaces`, `requires`) prima di costruire i
+  comandi; poi si confronta con le cartelle (voce senza cartella, cartella senza voce, `name` del
+  frontmatter diverso). Tutti gli errori escono in un unico messaggio e il build si ferma.
+- Il JSON generato **non è versionato**: lo rigenerano `predev`, `prebuild` e `pretypecheck`
+  (oppure `npm run generate`). Il build va quindi lanciato da un checkout completo del repo.
+
+I componenti non citano skill per nome: il sito funziona con qualunque insieme di skill del
+manifest, e sezione, voce di menu e testi sugli agent compaiono solo se il catalogo ne contiene.
+
+## Requisiti
+
+- Node.js ≥ 20.9.
+- Nessun accesso alla rete durante il build: DM Sans è servita da file locale
+  (`src/fonts/`, licenza SIL OFL 1.1 in `src/fonts/DMSans-OFL.txt`), Geist Mono arriva dal
+  pacchetto npm `geist`.
 
 ## Sviluppo
 
 ```bash
 cd site
-npm install
-npm run dev      # genera i dati + avvia su http://localhost:3000
+npm ci
+npm run dev        # genera i dati + avvia su http://localhost:3000
 ```
 
-## Build
+## Controlli
 
 ```bash
-npm run build    # prebuild (genera dati) + next build
-npm start
+npm run lint       # eslint . (flat config con eslint-config-next)
+npm run typecheck  # genera i dati + tsc --noEmit
+npm test           # node --test: validazione del manifest nel generatore
+npm run build      # genera i dati + next build → out/
 ```
 
-## Deploy su Vercel
+## Build statico
 
-Il sito vive in `site/`, quindi su Vercel imposta **Root Directory = `site`**.
-
-- Framework preset: **Next.js** (autodetect).
-- Build command: `npm run build` (default).
-- Il `prebuild` legge `../skills` e `../agents`: Vercel fa il checkout dell'intero repo,
-  quindi i path relativi funzionano in fase di build.
-
-CLI:
+`npm run build` scrive il sito in `out/`. Con `trailingSlash` ogni pagina è una cartella con il
+suo `index.html` (`out/index.html`, `out/come-funziona/index.html`), quindi funziona su qualunque
+hosting statico. Anteprima locale:
 
 ```bash
-npm i -g vercel
-cd site
-vercel            # primo deploy (preview) — chiede di impostare la root
-vercel --prod     # produzione
+python3 -m http.server -d out 8080   # poi http://localhost:8080
 ```
+
+## Deploy su Cloudflare Pages
+
+Il contenuto di `out/` si pubblica sul progetto Pages `cleverops` con Wrangler 4, indicando
+sempre l'account in modo esplicito:
+
+```bash
+npm run build
+CLOUDFLARE_ACCOUNT_ID=<id-account> npx wrangler@4 pages deploy out \
+  --project-name cleverops --branch main          # produzione
+CLOUDFLARE_ACCOUNT_ID=<id-account> npx wrangler@4 pages deploy out \
+  --project-name cleverops --branch pr-<n>        # anteprima
+```
+
+Il dominio `cleverops.cleversoft.it` punta con un CNAME al sottodominio `*.pages.dev` del
+progetto.
 
 ## Provare impeccable su questo sito
 

@@ -1,4 +1,4 @@
-import { catalog } from "@/lib/skills";
+import { catalog, offerLabelSentence } from "@/lib/skills";
 
 export function Footer() {
   return (
@@ -9,7 +9,8 @@ export function Footer() {
             cleverOps<span className="text-brand">.</span>
           </div>
           <p className="mt-1 max-w-sm font-sans text-sm text-[var(--zinc-400)]">
-            Skill e agent DevOps/AI di Cleversoft IT per Claude Code e Codex.
+            {offerLabelSentence} DevOps/AI di Cleversoft IT
+            per Claude Code e Codex.
           </p>
         </div>
         <div className="flex flex-col gap-2 font-mono text-xs text-[var(--zinc-500)] sm:items-end">
