@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
 # Guardie prima di ogni push: tipo e nome del ref, provenienza della storia, contenuti riservati, segreti.
+# Gira dalla copia installata da scripts/setup-hooks.sh in <git-dir>/cleverops-guards/:
+# funziona anche su branch che non contengono scripts/ (orphan, storie estranee).
 # Il controllo sui branch work/** è solo qui, in locale: GitHub non lo può imporre prima del push.
 set -euo pipefail
 remote="${1:-origin}"
+guards="$(cd "$(dirname "$0")/.." && pwd)"
 root="$(git rev-parse --show-toplevel)"
+for f in check-public.mjs check-provenance.mjs public-assets.json .gitleaks.toml; do
+  [ -f "$guards/$f" ] || { echo "✗ guardia mancante ($f): rilancia scripts/setup-hooks.sh" >&2; exit 1; }
+done
+for f in scripts/check-public.mjs scripts/check-provenance.mjs scripts/public-assets.json .gitleaks.toml .githooks/pre-commit .githooks/pre-push; do
+  [ -f "$root/$f" ] || continue
+  b="$(basename "$f")"; installed="$guards/$b"; [ -f "$installed" ] || installed="$guards/hooks/$b"
+  cmp -s "$root/$f" "$installed" || { echo "✗ $f è cambiato: rilancia scripts/setup-hooks.sh" >&2; exit 1; }
+done
+export PUBLIC_GUARD_ASSETS="$guards/public-assets.json"
 zero=0000000000000000000000000000000000000000
 noignore="$(mktemp -d)"; trap 'rm -rf "$noignore"' EXIT   # nessun .gitleaksignore dal checkout
 status=0
@@ -13,17 +25,17 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     refs/tags/*) echo "✗ pre-push: i tag non si pubblicano né si cancellano da qui" >&2; status=1; continue ;;
     *) echo "✗ pre-push: si pubblicano solo branch work/** (e main al bootstrap)" >&2; status=1; continue ;;
   esac
-  node "$root/scripts/check-public.mjs" --name "${remote_ref#refs/heads/}" || status=1
+  node "$guards/check-public.mjs" --name "${remote_ref#refs/heads/}" || status=1
   [ "$local_sha" = "$zero" ] && continue   # cancellazione di un branch consentito
-  node "$root/scripts/check-provenance.mjs" "$local_sha" || status=1
+  node "$guards/check-provenance.mjs" "$local_sha" || status=1
   if [ "$remote_sha" = "$zero" ]; then
-    node "$root/scripts/check-public.mjs" --new "$local_sha" "$remote" || status=1
+    node "$guards/check-public.mjs" --new "$local_sha" "$remote" || status=1
     log_opts="$local_sha --not --remotes=$remote"
   else
-    node "$root/scripts/check-public.mjs" --range "$remote_sha" "$local_sha" || status=1
+    node "$guards/check-public.mjs" --range "$remote_sha" "$local_sha" || status=1
     log_opts="$remote_sha..$local_sha"
   fi
-  gitleaks git --redact --no-banner --ignore-gitleaks-allow --config "$root/.gitleaks.toml" \
+  gitleaks git --redact --no-banner --ignore-gitleaks-allow --config "$guards/.gitleaks.toml" \
     --gitleaks-ignore-path "$noignore" --log-opts="$log_opts" "$root" || status=1
 done
 exit $status

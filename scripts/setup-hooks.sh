@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Da eseguire una volta in ogni clone da cui si pubblica su GitHub.
-# Attiva gli hook di .githooks e registra lo SHA del commit seed per il controllo di provenienza.
+# Da eseguire una volta in ogni clone da cui si pubblica su GitHub, e di nuovo dopo ogni
+# aggiornamento delle guardie. Copia hook e guardie in <git-dir>/cleverops-guards/ e imposta
+# core.hooksPath con un percorso ASSOLUTO: così gli hook restano attivi su qualunque branch,
+# anche orphan o con una storia che non contiene .githooks/ e scripts/.
 # Il seed atteso è in scripts/SEED; solo al bootstrap (prima che esista) si usa --bootstrap.
 set -euo pipefail
 root="$(git rev-parse --show-toplevel)"
@@ -20,9 +22,15 @@ if [ -z "$expected" ]; then
   expected="$roots"
 fi
 [ "$roots" = "$expected" ] || { echo "✗ la radice locale ${roots:0:7} non è il seed atteso ${expected:0:7}" >&2; exit 1; }
-git config core.hooksPath .githooks
-chmod +x .githooks/*
+
+guards="$(cd "$(git rev-parse --git-common-dir)" && pwd)/cleverops-guards"
+rm -rf "$guards"
+mkdir -p "$guards/hooks"
+cp .githooks/pre-commit .githooks/pre-push "$guards/hooks/"
+cp scripts/check-public.mjs scripts/check-provenance.mjs scripts/public-assets.json .gitleaks.toml "$guards/"
+chmod +x "$guards/hooks/"*
+git config core.hooksPath "$guards/hooks"
 git config cleverops.seed "$expected"
 [ -f "$HOME/.config/cleverops/public-denylist.txt" ] || \
   echo "⚠ manca ~/.config/cleverops/public-denylist.txt: check-public fallirà finché non la crei" >&2
-echo "✓ hook attivi (core.hooksPath=.githooks), seed ${expected:0:7}"
+echo "✓ hook attivi da $guards (percorso assoluto), seed ${expected:0:7}"
