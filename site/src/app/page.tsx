@@ -6,14 +6,14 @@ import { TableOfContents } from "@/components/TableOfContents";
 import { SkillExplorer } from "@/components/SkillExplorer";
 import { AgentCard } from "@/components/AgentCard";
 import { InstallerSection } from "@/components/InstallerSection";
-import { ToolbeltSection } from "@/components/ToolbeltSection";
+import { ExtraSection } from "@/components/ExtraSection";
 import { catalog, hasAgents, offerLabelSentence } from "@/lib/skills";
 
 const TOC = [
   { id: "skill", label: "Skill" },
-  { id: "toolbelt", label: "Toolbelt" },
   ...(hasAgents ? [{ id: "agent", label: "Agent" }] : []),
   { id: "installa", label: "Installer" },
+  { id: "extra", label: "Extra" },
 ];
 
 export default function Home() {
@@ -57,8 +57,6 @@ export default function Home() {
             <SkillExplorer />
           </Section>
 
-          <ToolbeltSection />
-
           {hasAgents && (
             <Section
               id="agent"
@@ -74,6 +72,8 @@ export default function Home() {
           )}
 
           <InstallerSection />
+
+          <ExtraSection />
         </div>
 
         {/* Indice — rail strutturale, solo desktop largo */}

@@ -77,6 +77,11 @@ test('argomenti invalidi e non-TTY: exit 2, nessuna scrittura', t => {
   }
 });
 
+test('--toolbelt rimosso: exit 2 con indicazione, nessuna scrittura', t => {
+  const s = sandbox(t), before = snapshot(s.home), r = s.run(['--toolbelt', '-y']);
+  assert.equal(r.status, 2, r.stderr); assert.match(r.stderr, /--toolbelt è stato rimosso/); assert.deepEqual(snapshot(s.home), before);
+});
+
 test('nessuna risorsa compatibile: exit 2 senza scritture', t => {
   const s = sandbox(t), src = fixture(s, 'public', { alpha: { category: 'Test', targets: ['codex'] } });
   const before = snapshot(s.home); const r = s.run(['--from', src, '--all', '--target', 'claude']);
@@ -175,7 +180,8 @@ test('npm pack: inventario runtime e install dal tarball senza .git', t => {
   const s = sandbox(t);
   const packed = captured('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', s.root], { cwd: ROOT, env: s.env, encoding: 'utf8', timeout: 60000 });
   ok(packed); const [pack] = JSON.parse(packed.stdout);
-  for (const name of ['cleverops.json', 'cleverops.schema.json', 'legacy-hashes.json', 'bin/lib/install.mjs', 'extras/toolbelt/install.sh']) assert(pack.files.some(f => f.path === name), name);
+  for (const name of ['cleverops.json', 'cleverops.schema.json', 'legacy-hashes.json', 'bin/lib/install.mjs']) assert(pack.files.some(f => f.path === name), name);
+  assert(!pack.files.some(f => f.path.startsWith('extras/')));
   assert(!pack.files.some(f => f.path.startsWith('.git/')));
   const extracted = captured('tar', ['-xzf', join(s.root, pack.filename), '-C', s.root], { env: s.env, encoding: 'utf8' }); ok(extracted);
   const pkg = join(s.root, 'package'); assert(!fs.existsSync(join(pkg, '.git')));

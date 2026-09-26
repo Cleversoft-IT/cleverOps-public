@@ -55,7 +55,6 @@ const FLAGS: Entry[] = [
   { term: "--no-private", what: "esclude le sorgenti private senza nemmeno provarne l'accesso (utile in CI)" },
   { term: "--list", what: "elenca il catalogo delle sorgenti accessibili ed esce (--list --json per l'output da script)" },
   { term: "--verbose", what: "mostra anche il motivo per cui una sorgente è stata saltata" },
-  { term: "--toolbelt", what: "installa i CLI del toolbelt (rg, fd, tree, ast-grep, gh)" },
   { term: "--impeccable", what: "installa impeccable (design system, dipendenza esterna via npx)" },
   { term: "--ccstatusline", what: "installa ccstatusline-gradient, la statusline per Claude Code (esterna, via npx)" },
   { term: "--no-ccstatusline", what: "non avvia l'extra ccstatusline" },

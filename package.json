@@ -10,7 +10,6 @@
     "bin/",
     "skills/",
     "agents/",
-    "extras/",
     "README.md",
     "cleverops.json",
     "cleverops.schema.json",

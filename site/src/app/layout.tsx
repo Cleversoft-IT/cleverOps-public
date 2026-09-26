@@ -21,12 +21,12 @@ const title = `cleverOps — ${offerLabel} per Claude Code e Codex`;
 export const metadata: Metadata = {
   title,
   description:
-    "Le skill, i tool e l'installer che il team Cleversoft usa ogni giorno con Claude Code e Codex. Comandi copia-incolla.",
+    "Le skill e l'installer che il team Cleversoft usa ogni giorno con Claude Code e Codex. Comandi copia-incolla.",
   metadataBase: new URL("https://cleverops.cleversoft.it"),
   openGraph: {
     title,
     description:
-      "Skill, toolbelt e installer per Claude Code e Codex, open source da Cleversoft IT.",
+      "Skill e installer per Claude Code e Codex, open source da Cleversoft IT.",
     locale: "it_IT",
     type: "website",
   },

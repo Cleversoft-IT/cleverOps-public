@@ -32,7 +32,7 @@ Flag (qualunque flag disabilita il wizard):
   --no-private                   esclude il privato senza probe
   --list [--json]                catalogo delle sorgenti accessibili
   --verbose                     include i motivi delle sorgenti saltate
-  --toolbelt --ccstatusline --impeccable   extra esterni opzionali
+  --ccstatusline --impeccable   extra esterni opzionali
   --no-ccstatusline              non avvia l'extra ccstatusline
   -y, --yes                     modalità non interattiva
   -h, --help                    mostra questo aiuto
@@ -44,7 +44,7 @@ export function parseArgs(argv) {
   const options = { command: 'install', mode: 'copy', project: process.cwd() };
   let modeSet = false, commandSet = false, projectSet = false;
   const values = new Map([['--target', 'targets'], ['--project', 'project'], ['--skills', 'skills'], ['--agents', 'agents'], ['--source', 'source'], ['--from', 'from']]);
-  const flags = new Map([['--all', 'all'], ['--no-private', 'noPrivate'], ['--list', 'list'], ['--json', 'json'], ['--verbose', 'verbose'], ['--toolbelt', 'toolbelt'], ['--ccstatusline', 'ccstatusline'], ['--impeccable', 'impeccable'], ['-y', 'yes'], ['--yes', 'yes'], ['-h', 'help'], ['--help', 'help']]);
+  const flags = new Map([['--all', 'all'], ['--no-private', 'noPrivate'], ['--list', 'list'], ['--json', 'json'], ['--verbose', 'verbose'], ['--ccstatusline', 'ccstatusline'], ['--impeccable', 'impeccable'], ['-y', 'yes'], ['--yes', 'yes'], ['-h', 'help'], ['--help', 'help']]);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (values.has(arg)) {
@@ -55,6 +55,7 @@ export function parseArgs(argv) {
       options[key] = ['targets', 'skills', 'agents'].includes(key) ? value.split(',').map(s => s.trim()) : value;
     } else if (flags.has(arg)) options[flags.get(arg)] = true;
     else if (arg === '--no-ccstatusline') options.ccstatusline = false;
+    else if (arg === '--toolbelt') throw new UsageError('--toolbelt è stato rimosso: installa rg, fd, ast-grep e gh con il gestore di pacchetti del sistema.');
     else if (['--copy', '--link'].includes(arg)) {
       if (modeSet && options.mode !== arg.slice(2)) throw new UsageError('--copy e --link sono alternativi.');
       options.mode = arg.slice(2); modeSet = true;
@@ -81,21 +82,19 @@ export function parseArgs(argv) {
   if (options.mode === 'link' && !options.from) throw new UsageError('--link richiede --from <path>.');
   if (options.json && !options.list && options.command !== 'doctor') throw new UsageError('--json richiede --list oppure doctor.');
   if (options.list && options.command !== 'install') throw new UsageError('--list si usa senza altri comandi.');
-  if (options.command !== 'install' && (options.toolbelt || options.ccstatusline || options.impeccable)) throw new UsageError('Gli extra si usano solo durante install.');
+  if (options.command !== 'install' && (options.ccstatusline || options.impeccable)) throw new UsageError('Gli extra si usano solo durante install.');
   options.interactive = !argv.some(a => a.startsWith('-')) && ['install', 'uninstall'].includes(options.command);
-  if (options.command === 'install' && !options.list && !options.interactive && !options.help && !options.all && !options.skills?.length && !options.agents?.length && !options.toolbelt && !options.ccstatusline && !options.impeccable) throw new UsageError('Niente da installare: usa --all oppure --skills/--agents.');
+  if (options.command === 'install' && !options.list && !options.interactive && !options.help && !options.all && !options.skills?.length && !options.agents?.length && !options.ccstatusline && !options.impeccable) throw new UsageError('Niente da installare: usa --all oppure --skills/--agents.');
   options.project = resolve(options.project);
   return options;
 }
 export function runExtras(options) {
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   const extras = [
-    [options.toolbelt, 'toolbelt', 'bash', [join(ROOT, 'extras', 'toolbelt', 'install.sh')]],
     [options.ccstatusline, 'ccstatusline', npx, ['-y', 'ccstatusline-gradient@latest', '--onboard']],
     [options.impeccable, 'impeccable', npx, ['-y', 'impeccable', 'install']],
   ];
   for (const [enabled, name, cmd, args] of extras) if (enabled) {
-    if (name === 'toolbelt' && process.platform === 'win32') throw new Error('Toolbelt: install.sh richiede una shell Unix.');
     const result = spawnSync(cmd, args, { stdio: 'inherit' });
     if (result.error || result.status !== 0) throw new Error(`Extra ${name} non completato (${result.error?.message || result.status || result.signal}).`);
   }
@@ -153,7 +152,7 @@ async function main(argv) {
     let results = [];
     const execute = chosen => {
       const result = install({ sources: loaded.sources, items, selected: selectItems(items, chosen), ...chosen,
-        sync: chosen.command === 'sync', hasExtras: chosen.hasExtras || chosen.toolbelt || chosen.ccstatusline || chosen.impeccable });
+        sync: chosen.command === 'sync', hasExtras: chosen.hasExtras || chosen.ccstatusline || chosen.impeccable });
       if (result.blocked) process.exitCode = 1;
       results = result.messages;
       return results;
