@@ -36,7 +36,7 @@ Il pacchetto non è su npm:
 | Scegliere a mano | `npx github:Cleversoft-IT/cleverOps-public` |
 | Tutto, per Claude Code e Codex | `… --target claude,codex --all` |
 | Tutto, solo in questo progetto | `… --target project --project . --all` |
-| Solo alcune skill | `… --target claude,codex --skills plan-auditor,transcribe` |
+| Solo alcune skill | `… --target claude,codex --skills plan-auditor,transcribe-local` |
 | Disinstallare | `… uninstall --target claude,codex --all` |
 
 <sub>`…` = `npx github:Cleversoft-IT/cleverOps-public`</sub>
@@ -46,14 +46,15 @@ Il pacchetto non è su npm:
 | Skill | In una riga |
 |---|---|
 | `drupal11-*` (7 skill) | Drupal 11.4: moduli, query/Views, configurazione, cache, theming, deploy/test/sicurezza, migrazioni ([dettagli](docs/drupal11/README.md)) |
-| `ddev-expert`, `docker-local` | Ambienti di sviluppo locale (DDEV, Docker Compose) |
-| `ionic-skills` | App Ionic/Capacitor |
+| `drupal-local-env` | Ambiente di sviluppo locale Drupal: DDEV o Docker Compose |
+| `ionic-skills` | App Ionic/Capacitor (in riscrittura come `ionic-capacitor-app`) |
 | `plan-auditor` | Revisione dei piani di implementazione prima di scrivere codice (Codex) |
 | `subagent-dev-with-codex` | Loop cross-model: Claude scrive il piano, Codex lo audita (Claude Code) |
-| `transcribe` | Audio → testo con Whisper in locale |
+| `transcribe-local` | Audio → testo con Whisper in locale, senza servizi esterni |
 
-> Il repo è in riordino: `ionic-skills` viene riscritta. Il catalogo sempre
-> aggiornato è sul sito.
+Il catalogo aggiornato è anche sul sito. Chi ha accesso al repo privato del team vede
+nell'installer anche le skill interne, marcate ⟨interno⟩: l'accesso si verifica con le tue
+credenziali git, senza prompt.
 
 ## Opzioni dell'installer
 
