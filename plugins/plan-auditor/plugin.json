@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "plan-auditor",
+  "version": "0.2.0",
+  "description": "Audit software implementation plans produced by coding agents before execution, and optionally audit implemented changes against an approved plan after execution.",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "plan-auditor",
+        "shortDescription": "Audit software implementation plans produced by coding agents before execution, and optionally audit implemented…",
+        "longDescription": "Audit software implementation plans produced by coding agents before execution, and optionally audit implemented changes against an approved plan after execution. Use when the user asks to review, verify, audit, validate, improve, re-check, iterate on, or run an external check on a development plan or its implementation, especially Claude Code Markdown plans in .claude/plans or ~/.claude/plans, Codex plans, repo-local plans/ directories, PLAN.md files, roadmap/ticket implementation plans, Drupal implementation plans, \"latest plan\" requests, or post-implementation plan compliance checks.",
+        "developerName": "Cleversoft IT",
+        "category": "Workflow",
+        "defaultPrompt": [
+          "Usa la skill plan-auditor."
+        ]
+      }
+    }
+  }
+}

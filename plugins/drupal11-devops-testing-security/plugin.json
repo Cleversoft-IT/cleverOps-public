@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "drupal11-devops-testing-security",
+  "version": "0.2.0",
+  "description": "Use when working on Drupal 11 deployment (composer recommended-project, composer-patches, drush deploy, drush updatedb / cim / deploy:hook / cache:warm, hook_update_N vs hook_post_update_NAME vs hook_deploy_NAME), settings.php hardening (trusted_host_patterns, hash_salt, config_sync_directory), PHPUnit 11 with attributes, KernelTestBase / BrowserTestBase, Nightwatch, major-version upgrades (D10→D11, D11→D12 readiness, choosing migration vs upgrade for D7 sites), and security (SQL injection, XSS, CSRF, AccessResult, TrustedCallbackInterface, SA-CORE).",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "drupal11-devops-testing-security",
+        "shortDescription": "Use when working on Drupal 11 deployment (composer recommended-project, composer-patches, drush deploy, drush updatedb…",
+        "longDescription": "Use when working on Drupal 11 deployment (composer recommended-project, composer-patches, drush deploy, drush updatedb / cim / deploy:hook / cache:warm, hook_update_N vs hook_post_update_NAME vs hook_deploy_NAME), settings.php hardening (trusted_host_patterns, hash_salt, config_sync_directory), PHPUnit 11 with attributes, KernelTestBase / BrowserTestBase, Nightwatch, major-version upgrades (D10→D11, D11→D12 readiness, choosing migration vs upgrade for D7 sites), and security (SQL injection, XSS, CSRF, AccessResult, TrustedCallbackInterface, SA-CORE).",
+        "developerName": "Cleversoft IT",
+        "category": "Drupal",
+        "defaultPrompt": [
+          "Usa la skill drupal11-devops-testing-security."
+        ]
+      }
+    }
+  }
+}

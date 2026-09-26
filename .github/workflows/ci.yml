@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/validate-skills.mjs
+      - run: npm run marketplace:check
       - run: node --test test/validate-skills.test.mjs test/deploy-site-gate.test.mjs
 
   installer:
