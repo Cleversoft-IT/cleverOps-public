@@ -119,13 +119,13 @@ test('probe bloccato: timeout e sorgente saltata senza cache', t => {
 });
 
 
-test('askpass disabilitati in probe, clone e fetch; GIT_SSH precede core.sshCommand', t => {
+test('askpass disabilitati in probe, clone e fetch; precedenza SSH come Git', t => {
   const s = sandbox(t), src = fixture(s, 'internal');
   sources(s, [bareSource(s, src)]);
   const log = gitWrapper(s);
   const env = { GIT_ASKPASS: 'askpass-da-non-usare', SSH_ASKPASS: 'ssh-askpass-da-non-usare',
     GIT_SSH: '/tmp/wrapper ssh', GIT_CONFIG_COUNT: '1',
-    GIT_CONFIG_KEY_0: 'core.sshCommand', GIT_CONFIG_VALUE_0: 'ssh -F ignorato' };
+    GIT_CONFIG_KEY_0: 'core.sshCommand', GIT_CONFIG_VALUE_0: 'ssh -F dedicato' };
   ok(s.run(['--list'], env));
   ok(s.run(['--list'], env));
   const operations = log().filter(e => e.args.some(a => ['ls-remote', 'clone', 'fetch'].includes(a)));
@@ -133,8 +133,13 @@ test('askpass disabilitati in probe, clone e fetch; GIT_SSH precede core.sshComm
   assert(operations.some(e => e.args.includes('fetch')));
   for (const operation of operations) {
     assert.equal(operation.gitAskpass, ''); assert.equal(operation.sshAskpass, '');
-    assert.equal(operation.ssh, "'/tmp/wrapper ssh' -o BatchMode=yes -o ConnectTimeout=5");
+    assert.equal(operation.ssh, 'ssh -F dedicato -o BatchMode=yes -o ConnectTimeout=5');
   }
   ok(s.run(['--list'], { ...env, GIT_SSH_COMMAND: 'ssh -i prioritario' }));
   assert.match(log().filter(e => e.args.includes('ls-remote')).at(-1).ssh, /^ssh -i prioritario /);
+  ok(s.run(['--list'], { ...env, GIT_CONFIG_COUNT: '0', GIT_SSH: "/tmp/wrapper ssh dell'utente" }));
+  assert.equal(log().filter(e => e.args.includes('ls-remote')).at(-1).ssh,
+    "'/tmp/wrapper ssh dell'\\''utente' -o BatchMode=yes -o ConnectTimeout=5");
+  ok(s.run(['--list']));
+  assert.equal(log().filter(e => e.args.includes('ls-remote')).at(-1).ssh, 'ssh -o BatchMode=yes -o ConnectTimeout=5');
 });

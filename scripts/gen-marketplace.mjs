@@ -104,6 +104,7 @@ export function buildMarketplace(root, warn = () => {}) {
       addResource(files, root, skill, `${plugin}/${skill}`, true);
       // Legge il payload solo dopo aver verificato il confine della risorsa.
       const frontmatter = parseFrontmatter(files.get(`${plugin}/${skill}/SKILL.md`).data.toString('utf8'));
+      if (frontmatter.name !== item.name) throw new Error(`name diverso dalla cartella: ${skill}/SKILL.md`);
       longDescription = frontmatter.description.replace(/\s+/g, ' ').trim();
       description = firstSentence(longDescription);
     } else {
@@ -115,14 +116,19 @@ export function buildMarketplace(root, warn = () => {}) {
       claude.plugins.push({ name: item.name, source: `./${plugin}`, description, version, ...repositoryField, category: item.category });
     }
     if (targets.includes('codex')) {
+      // Unica fonte per identità e interfaccia dei due formati compatibili.
+      const identity = { name: item.name, version, description, author: { name: 'Cleversoft IT' }, ...repositoryField };
+      const ui = {
+        displayName: item.name, shortDescription: shortDescription(description), longDescription,
+        developerName: 'Cleversoft IT', category: item.category,
+        defaultPrompt: [`Usa la skill ${item.name}.`],
+      };
       files.set(`${plugin}/plugin.json`, { data: json({
         $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
-        name: item.name, version, description, author: { name: 'Cleversoft IT' }, ...repositoryField,
-        extensions: { 'com.openai': { interface: {
-          displayName: item.name, shortDescription: shortDescription(description), longDescription,
-          developerName: 'Cleversoft IT', category: item.category,
-          defaultPrompt: [`Usa la skill ${item.name}.`],
-        } } },
+        ...identity, extensions: { 'com.openai': { interface: ui } },
+      }), mode: 0o644 });
+      files.set(`${plugin}/.codex-plugin/plugin.json`, { data: json({
+        ...identity, skills: './skills/', interface: ui,
       }), mode: 0o644 });
       codex.plugins.push({ name: item.name, source: { source: 'local', path: `./${plugin}` },
         policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: item.category });

@@ -91,7 +91,10 @@ export function parseArgs(argv) {
 }
 // Wizard con soli extra: nessuna risorsa da installare, quindi nessun target da risolvere.
 export function wizardInstall(execute, options, pick) {
-  if (!pick.skills.length && !pick.agents.length) return [];
+  if (!pick.skills.length && !pick.agents.length) {
+    if (!pick.extras.length) throw new UsageError('Niente da installare: seleziona almeno una skill, un agent o un extra.');
+    return [];
+  }
   return execute({ ...options, ...pick, targets: resolveTargets(pick.targets), hasExtras: pick.extras.length > 0 });
 }
 export function runExtras(options) {
@@ -114,7 +117,8 @@ async function main(argv) {
     console.log(restoreBackup(options.backup).join('\n'));
     return;
   }
-  if (!options.list) options.targets = resolveTargets(options.targets);
+  // Il wizard di installazione risolve i target dopo la scelta delle risorse.
+  if (!options.list && !(options.interactive && options.command === 'install')) options.targets = resolveTargets(options.targets);
   // Un registro illeggibile blocca ogni modifica, anche della cache.
   if (!options.list) readRegistry();
   if (options.command === 'uninstall') {

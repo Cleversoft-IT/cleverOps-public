@@ -77,14 +77,18 @@ export function intact(entry) {
   if (stat.isSymbolicLink()) return false;
   try { return treeHash(entry.dest) === entry.sha256; } catch { return false; }
 }
-export function move(from, to) {
+export function move(from, to, saved = () => {}) {
   try { fs.renameSync(from, to); }
   catch (e) {
     if (e.code !== 'EXDEV') throw e;
     try { fs.cpSync(from, to, { recursive: true, dereference: false, verbatimSymlinks: true, errorOnExist: true, force: false }); }
     catch (copyError) { fs.rmSync(to, { recursive: true, force: true }); throw copyError; }
+    // Registra la copia completa prima di una rimozione che può fallire a metà.
+    saved();
     fs.rmSync(from, { recursive: true });
+    return;
   }
+  saved();
 }
 export function linkSnapshot(path) {
   let resolved = null;
@@ -181,10 +185,11 @@ export class Transaction {
       const old = backup
         ? join(this.backupFolder(), `${this.backups.length}-${basename(dest)}`)
         : join(dirname(dest), `.cleverops-tmp-${randomUUID()}`);
-      move(dest, old);
-      change.old = old;
-      change.backedUp = backup;
-      if (backup) this.backups.push({ path: dest, stored: basename(old) });
+      move(dest, old, () => {
+        change.old = old;
+        change.backedUp = backup;
+        if (backup) this.backups.push({ path: dest, stored: basename(old) });
+      });
     }
     return change;
   }
@@ -220,6 +225,8 @@ export class Transaction {
     try { this.writeBackupManifest(); } catch (e) { errors.push(e.message); }
     for (const c of [...this.changes].reverse()) {
       try {
+        // Dopo una rimozione parziale preserva la copia completa per il recupero.
+        if (c.old && !c.placed && lstat(c.dest)) throw new Error(`Rimozione dell'originale incompleta (${c.dest})`);
         if (c.placed) fs.rmSync(c.dest, { recursive: true, force: true });
         if (c.old) move(c.old, c.dest);
         else if (c.link && !lstat(c.dest)) fs.symlinkSync(c.link.linkTarget, c.dest);

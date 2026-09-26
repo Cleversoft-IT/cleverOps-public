@@ -1,0 +1,20 @@
+{
+  "name": "drupal11-module-development",
+  "version": "0.2.1",
+  "description": "Use when writing or modifying custom Drupal 11 module code under modules/custom/ — services, dependency injection, plugins, hooks, controllers, forms, entity types.",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "drupal11-module-development",
+    "shortDescription": "Use when writing or modifying custom Drupal 11 module code under modules/custom/ — services, dependency injection,…",
+    "longDescription": "Use when writing or modifying custom Drupal 11 module code under modules/custom/ — services, dependency injection, plugins, hooks, controllers, forms, entity types. Use when converting procedural hooks to OOP, replacing deprecated APIs (drupal_get_path, file_create_url, entity_load, drupal_render, drupal_set_message), converting annotation plugins to attributes, scaffolding a new D11 module with drush generate / drush field:create, or running phpcs (Drupal + DrupalPractice) before a commit. Drupal 11 specific — not for D9 or D10.",
+    "developerName": "Cleversoft IT",
+    "category": "Drupal",
+    "defaultPrompt": [
+      "Usa la skill drupal11-module-development."
+    ]
+  }
+}

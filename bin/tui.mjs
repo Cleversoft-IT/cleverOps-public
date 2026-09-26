@@ -168,7 +168,9 @@ function Installing({ label, run, onDone, onError }) {
 
 export async function probeSources(load) {
   const app = render(h(Box, null, h(Spinner), h(Text, null, '  Verifica delle sorgenti…')));
-  try { return await load(); } finally { app.unmount(); await app.waitUntilExit(); }
+  // Ink deve registrare l'attesa prima dell'unmount, altrimenti perde l'evento.
+  const exited = app.waitUntilExit();
+  try { return await load(); } finally { app.unmount(); await exited; }
 }
 
 // --------------------------------------------------------------------- App

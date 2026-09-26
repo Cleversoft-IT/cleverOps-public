@@ -77,18 +77,21 @@ export function scanMigrations({ sources, items, targets, project, registry }) {
   }
   return [...candidates.values()];
 }
-export function applyMigrations(candidates, registry, tx, project, warn = () => {}) {
+export function applyMigrations(candidates, registry, tx, project, warn = () => {}, pluginActive = () => false) {
   const results = [];
   for (const c of candidates) {
     if (!lstat(c.path)) continue;
     if (c.backup) { tx.remove(c.path, true); results.push(`✓ backup legacy spostato: ${c.name}`); continue; }
     if (!c.known) { warn(`Migrazione dubbia: ${c.path}; ${c.reason}.`); continue; }
-    // Tutte le sostitute compatibili devono essere già installate e verificate.
-    const ready = c.replacements.length && c.replacements.every(i => registry.entries.some(e => e.dest === destination(i, c.harness, project) && e.source === i.source.id && intact(e)));
+    // Ogni sostituta deve essere integra nel registro o abilitata come plugin nello stesso scope.
+    const plugins = c.replacements.map(i => pluginActive(i, c.harness, project));
+    const ready = c.replacements.length && c.replacements.every((i, n) => plugins[n] || registry.entries.some(e => e.dest === destination(i, c.harness, project) && e.source === i.source.id && intact(e)));
     if (!c.removed && !ready) { warn(`Migrazione in attesa delle sostitute: ${c.name}.`); continue; }
     if (registry.entries.some(e => e.dest === c.path)) continue;
-    tx.remove(c.path, lstat(c.path).isSymbolicLink());
-    results.push(`✓ migrato [${c.harness}] ${c.name}`);
+    // Il canale plugin non appartiene al registro: conserva sempre il legacy recuperabile.
+    const backup = plugins.some(Boolean) || lstat(c.path).isSymbolicLink();
+    tx.remove(c.path, backup);
+    results.push(`✓ migrato [${c.harness}] ${c.name}${backup ? ' (originale nei backup dello stato)' : ''}`);
   }
   return results;
 }

@@ -4,18 +4,70 @@
   "id": "public",
   "visibility": "public",
   "skills": {
-    "drupal-local-env": {"category": "Drupal", "replaces": ["ddev-expert", "docker-local"]},
-    "drupal11-config-management": {"category": "Drupal"},
-    "drupal11-devops-testing-security": {"category": "Drupal", "replaces": ["drupal-security"]},
-    "drupal11-frontend-theming": {"category": "Drupal"},
-    "drupal11-migrate": {"category": "Drupal", "replaces": ["drupal-migration"]},
-    "drupal11-module-development": {"category": "Drupal", "replaces": ["drupal-expert"]},
-    "drupal11-performance-caching": {"category": "Drupal"},
-    "drupal11-views-and-queries": {"category": "Drupal"},
-    "ionic-capacitor-app": {"category": "Mobile", "replaces": ["ionic-skills"]},
-    "plan-auditor": {"category": "Workflow", "targets": ["codex"]},
-    "subagent-dev-with-codex": {"category": "Workflow", "targets": ["claude"]},
-    "transcribe-local": {"category": "AI", "replaces": ["transcribe"], "requires": {"path": "~/.whisper-env"}}
+    "drupal-local-env": {
+      "category": "Drupal",
+      "replaces": [
+        "ddev-expert",
+        "docker-local"
+      ]
+    },
+    "drupal11-config-management": {
+      "category": "Drupal"
+    },
+    "drupal11-devops-testing-security": {
+      "category": "Drupal",
+      "replaces": [
+        "drupal-security"
+      ]
+    },
+    "drupal11-frontend-theming": {
+      "category": "Drupal"
+    },
+    "drupal11-migrate": {
+      "category": "Drupal",
+      "replaces": [
+        "drupal-migration"
+      ]
+    },
+    "drupal11-module-development": {
+      "category": "Drupal",
+      "replaces": [
+        "drupal-expert"
+      ]
+    },
+    "drupal11-performance-caching": {
+      "category": "Drupal"
+    },
+    "drupal11-views-and-queries": {
+      "category": "Drupal"
+    },
+    "ionic-capacitor-app": {
+      "category": "Mobile",
+      "replaces": [
+        "ionic-skills"
+      ]
+    },
+    "plan-auditor": {
+      "category": "Workflow",
+      "targets": [
+        "codex"
+      ]
+    },
+    "subagent-dev-with-codex": {
+      "category": "Workflow",
+      "targets": [
+        "claude"
+      ]
+    },
+    "transcribe-local": {
+      "category": "AI",
+      "replaces": [
+        "transcribe"
+      ],
+      "requires": {
+        "path": "~/.whisper-env"
+      }
+    }
   },
   "agents": {}
 }

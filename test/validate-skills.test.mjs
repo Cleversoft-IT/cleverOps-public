@@ -115,6 +115,22 @@ test('percorsi fissi vietati anche in riferimenti e script, percorsi relativi am
   assert.equal(validateSkills(root).errors.filter(error => error.includes('percorso di installazione fisso')).length, 4);
 });
 
+test('percorsi di installazione: variabili con e senza graffe, senza falsi prefissi', t => {
+  const root = source(t), file = join(root, 'skills/alpha/references/paths.md');
+  const denied = ['$CODEX_HOME/skills', '$CLAUDE_CONFIG_DIR/skills',
+    '${CODEX_HOME}/skills', '${CLAUDE_CONFIG_DIR:-x}/skills', '$CODEX_HOME\\skills'];
+  for (const path of denied) {
+    write(file, `Esempio:\n${path}/alpha\n`);
+    const errors = validateSkills(root).errors;
+    assert.equal(errors.length, 1, path);
+    assert.match(errors[0], /paths.md:2:.*percorso di installazione fisso/);
+  }
+  for (const path of ['$CODEX_HOME_EXTRA/skills', '$CLAUDE_CONFIG_DIR/skillsExtra', '$SKILL_DIR/scripts', './references']) {
+    write(file, path);
+    assert.deepEqual(validateSkills(root).errors, [], path);
+  }
+});
+
 test('manifest invalidi sono bloccati usando il contratto runtime', t => {
   const root = source(t), file = join(root, 'cleverops.json');
   const base = JSON.parse(fs.readFileSync(file, 'utf8'));

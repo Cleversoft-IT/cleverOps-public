@@ -136,15 +136,19 @@ import { homeOutline, settingsOutline } from 'ionicons/icons';
 <script setup lang="ts">
 import { IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, onIonViewWillEnter } from '@ionic/vue';
 import { useRoute } from 'vue-router';
+import { computed } from 'vue';
 
 const route = useRoute();
-const id = route.params.id as string;
+const id = computed(() => route.params.id as string);
 
 onIonViewWillEnter(() => { /* ricarica dati */ });
 </script>
 ```
 
 - Ogni pagina in `<ion-page>`; import esplicito dei componenti Ionic usati.
+- Il parametro resta reattivo quando cambia solo `:id` e Vue riusa la pagina.
+  Per ricaricare i dati anche in questo caso, osservare `id` con `watch`;
+  il template usa l'unwrapping automatico, nello script leggere `id.value`.
 - Navigazione: `router-link="/tabs/home/42"` sui componenti Ionic; programmatica con
   `useIonRouter()` (`ionRouter.push('/x')`, `ionRouter.back()`) o `useRouter()`
   (`router.replace('/tabs')`).

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "drupal11-views-and-queries",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Use when reading data from Drupal 11 — EntityQuery, Views plugins (field/filter/sort/argument/relationship/area/style/row/display/cache/access/pager), hook_views_data and hook_views_data_alter, hook_query_TAG_alter, hook_views_query_alter, computed Views fields, node_access tagging, and the choice between Views, EntityQuery, raw Database API, and Search API.",
   "author": {
     "name": "Cleversoft IT"

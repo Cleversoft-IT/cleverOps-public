@@ -13,7 +13,10 @@ npx github:Cleversoft-IT/cleverOps-public uninstall --all --target claude,codex
 
 Qualunque flag seleziona la modalità non interattiva. Install e uninstall senza
 flag richiedono un TTY; doctor, sync e restore funzionano anche senza TTY.
-Nel wizard è obbligatorio selezionare almeno una destinazione.
+Nel wizard è obbligatorio selezionare almeno una destinazione quando si scelgono
+skill o agent; la scelta avviene nel wizard anche senza harness già rilevati.
+Con soli extra non serve un target. Una conferma completamente vuota restituisce
+exit 2 senza installazioni o avvio di extra.
 I target predefiniti sono gli harness rilevati; senza harness occorre `--target`.
 `project` usa `.claude/{skills,agents}` nella directory corrente o in `--project`.
 Le skill Codex vanno in `~/.agents/skills`, gli agent in `${CODEX_HOME:-~/.codex}/agents`.
@@ -50,7 +53,7 @@ escludere anche sorgenti private con ID personalizzati prima del download.
 In caso di collisione dello stesso nome e tipo prevale `public`, con avviso.
 
 Ogni operazione Git ha timeout 15 secondi. Il probe conserva la precedenza
-`GIT_SSH_COMMAND` → `GIT_SSH` → `core.sshCommand` → `ssh`, aggiungendo
+`GIT_SSH_COMMAND` → `core.sshCommand` → `GIT_SSH` → `ssh`, aggiungendo
 `BatchMode=yes` e `ConnectTimeout=5`. `GIT_SSH` è un percorso eseguibile, anche
 con spazi. Probe, clone e fetch impostano `GIT_TERMINAL_PROMPT=0`,
 `GCM_INTERACTIVE=never`, `GIT_ASKPASS=''` e `SSH_ASKPASS=''` per evitare prompt.
@@ -94,6 +97,10 @@ e salvato in un nuovo backup prima della sostituzione.
 In caso di errore, tenta di riportare nel backup le voci già ripristinate.
 Anche un rollback dell'installazione fallito conserva un manifest per recuperare
 i backup rimasti, tramite questo comando dopo aver liberato le destinazioni.
+Nel fallback tra filesystem diversi (`EXDEV`), la copia completa viene registrata
+prima di rimuovere l'originale. Se la rimozione fallisce lasciando una destinazione
+parziale, il rollback conserva la copia completa e segnala il percorso di recupero;
+il registro rimane invariato.
 Per gli originali conservati nei temporanei invece che nei backup, l'errore di
 rollback indica il percorso da cui recuperarli manualmente.
 
@@ -116,6 +123,14 @@ sostitute compatibili. `sync` aggiorna le risorse già registrate sul rispettivo
 harness e installa le sostitute solo sull'harness del legacy. La chiave dei job è
 `(source, kind, name, harness)`: indicare due target non crea copie su un harness
 che non aveva l'installazione o il legacy. Lo scope project resta distinto.
+Una sostituta è soddisfatta anche dal suo plugin abilitato per la stessa sorgente,
+harness e scope, rilevato dai settings/config come per il cambio canale.
+Se almeno una sostituta usa il plugin, la legacy riconosciuta viene spostata nei
+backup dello stato con manifest recuperabile, anche quando è una copia; i link
+conservano target grezzo e percorso risolto. Non si creano voci di proprietà per
+i plugin e non si adottano copie estranee. Tutte le sostitute devono essere
+disponibili, come file registrati integri o plugin attivi; una legacy con hash
+sconosciuto resta invariata. La sola presenza del catalogo o della cache non basta.
 `sync` non accetta selezioni `--all`, `--skills` o `--agents`: restituisce exit 2.
 Tutti i backup legacy `.bak-*` vengono spostati fuori da `skills/`, anche con
 hash o nome sconosciuto e senza sorgenti disponibili; contenuti e target dei link
@@ -180,9 +195,11 @@ restano riconosciuti i bundle `cleverops-public`/`cleverops-internal` (oppure
 Non si deduce un'abilitazione dalla sola presenza della cache del plugin.
 
 Dopo aver aggiunto il marketplace **e installato/abilitato il plugin**, eseguire
-`sync`: le sole installazioni registrate per quel canale vengono rimosse (modificate
-in backup), poi l'harness viene saltato. Anche install riconcilia il canale e rifiuta
-nuove copie coperte da un plugin attivo. Per tornare ai file, disabilitare il plugin
+`sync`: le installazioni registrate per quel canale vengono rimosse (modificate
+in backup), le legacy riconosciute con tutte le sostitute disponibili passano nei
+backup come descritto sopra, poi l'harness viene saltato. Anche install completa
+queste migrazioni e rifiuta nuove copie coperte da un plugin attivo (exit 1, pur
+avendo riconciliato la legacy). Per tornare ai file, disabilitare il plugin
 prima di installare. I test coprono entrambi i passaggi con configurazioni sintetiche;
 la [guida marketplace](marketplace.md) documenta installazione, aggiornamenti e
 collaudo nei client. Il target `codex` legge il config utente, non quello del

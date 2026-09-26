@@ -35,12 +35,13 @@ const ASSETS_FILE = process.env.PUBLIC_GUARD_ASSETS
 
 // Percorsi che non devono mai esistere nel repo pubblico.
 const FORBIDDEN_PATHS = [
-  [/^agents\//, 'agent interni'],
+  [/^(?:plugins\/[^/]+\/)?agents\//, 'agent interni'],
   [/^legacy\//, 'materiale legacy'],
   [/(^|\/)references\/[^/]*contact/i, 'file di contatti'],
   [/^install\.sh$/, 'installer bash dismesso'],
-  [/^skills\/cleversoft-design/, 'design system interno'],
-  [/^skills\/transcribe-pro(\/|$)/, 'skill interna'],
+  [/^(?:skills\/|plugins\/(?:[^/]+\/skills\/)?)cleversoft-design/, 'design system interno'],
+  [/^(?:skills\/|plugins\/(?:[^/]+\/skills\/)?)transcribe-pro(\/|$)/, 'skill interna'],
+  [/^(?:skills\/|plugins\/(?:[^/]+\/skills\/)?)cleverops-maintainer(\/|$)/, 'skill interna'],
   [/^skills\/frontend-design(\/|$)/, 'skill rimossa (plugin ufficiale)'],
 ];
 
