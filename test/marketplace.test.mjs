@@ -321,7 +321,7 @@ for (const harness of ['claude', 'codex']) for (const command of ['sync', 'insta
       assert(fs.existsSync(other));
       const [entry] = backupEntries(s); assert.equal(backupEntries(s).length, 1); assert.equal(entry.path, old);
       if (linked) {
-        assert.equal(entry.linkTarget, 'originale'); assert.equal(entry.resolved, original);
+        assert.equal(entry.linkTarget, 'originale'); assert.equal(entry.resolved, fs.realpathSync(original));
         assert.deepEqual(snapshot(original), oldBefore);
       } else assert.deepEqual(snapshot(join(entry.folder, entry.stored)), oldBefore);
       assert.deepEqual(snapshot(src), sourceBefore);
