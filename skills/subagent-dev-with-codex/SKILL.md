@@ -1,6 +1,5 @@
 ---
 name: subagent-dev-with-codex
-targets: claude
 description: Use when entering plan mode, planning a multi-step development or refactor task, or orchestrating subagent-driven development where GPT-5.6 (via the local Codex CLI on the ChatGPT flat plan) participates alongside Anthropic models. Triggers on plan mode, breaking work into subagents, orchestrating an implementation, or wanting a cross-model audit or second opinion.
 ---
 

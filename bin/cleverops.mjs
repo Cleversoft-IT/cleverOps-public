@@ -1,262 +1,177 @@
 #!/usr/bin/env node
-// cleverOps — installer TUI per le skill/agent DevOps·AI di Cleversoft IT.
-// Distribuito come pacchetto npm: `npx github:Cleversoft-IT/cleverOps-public`
-import { fileURLToPath } from 'node:url';
-import { dirname, join, basename } from 'node:path';
+// cleverOps — installer multi-sorgente per Claude Code e Codex.
 import fs from 'node:fs';
-import os from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-// La TUI interattiva è in Ink (bin/tui.mjs), importata dinamicamente solo quando serve.
+import { catalog, NAME, ID, UsageError } from './lib/manifest.mjs';
+import { loadSources } from './lib/sources.mjs';
+import { detectHarness, doctor, install, resolveTargets, selectItems, uninstall } from './lib/install.mjs';
+import { readRegistry, restoreBackup } from './lib/registry.mjs';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PKG_ROOT = join(__dirname, '..');
-const SKILLS_DIR = join(PKG_ROOT, 'skills');
-const AGENTS_DIR = join(PKG_ROOT, 'agents');
-const HOME = os.homedir();
-
-// Eseguito da un checkout git (dev) o dalla cache npx (effimera)?
-// I symlink hanno senso solo da un checkout stabile; via npx vanno in copia.
-const IS_DEV_CHECKOUT = fs.existsSync(join(PKG_ROOT, '.git'));
-
-const listSkills = () => fs.existsSync(SKILLS_DIR)
-  ? fs.readdirSync(SKILLS_DIR, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).sort() : [];
-
-// Harness di destinazione della skill: frontmatter `targets: claude|codex` (assente = entrambi).
-function skillTargets(name) {
-  try {
-    const md = fs.readFileSync(join(SKILLS_DIR, name, 'SKILL.md'), 'utf8');
-    const fm = (md.match(/^---\r?\n([\s\S]*?)\r?\n---/) || [])[1] || '';
-    const m = fm.match(/^targets:\s*(.+)$/m);
-    if (!m) return ['claude', 'codex'];
-    const t = m[1].trim().replace(/^["']|["']$/g, '').split(',').map(s => s.trim()).filter(Boolean);
-    return t.length ? t : ['claude', 'codex'];
-  } catch { return ['claude', 'codex']; }
-}
-const HARNESS_LABEL = { claude: 'Claude Code', codex: 'Codex' };
-const listAgents = () => fs.existsSync(AGENTS_DIR)
-  ? fs.readdirSync(AGENTS_DIR).filter(f => f.endsWith('.md')).sort() : [];
-
-// Home configurabili via env (come fa skills.sh): rispetta installazioni non standard.
-const CLAUDE_HOME = process.env.CLAUDE_CONFIG_DIR?.trim() || join(HOME, '.claude');
-const CODEX_HOME  = process.env.CODEX_HOME?.trim() || join(HOME, '.codex');
-
-const TARGET_DIRS = {
-  claude:  { skills: join(CLAUDE_HOME, 'skills'),  agents: join(CLAUDE_HOME, 'agents') },
-  codex:   { skills: join(CODEX_HOME, 'skills'),   agents: join(CODEX_HOME, 'agents') },
-};
-const projectDirs = (p) => ({ skills: join(p, '.claude', 'skills'), agents: join(p, '.claude', 'agents') });
-
-// Detection harness installati: basta controllare i path noti (ispirato a skills.sh).
-const detectHarness = () => ({
-  claude: fs.existsSync(CLAUDE_HOME),
-  codex:  fs.existsSync(CODEX_HOME),
-});
-
-// Versione del pacchetto (mostrata nel banner della TUI Ink).
-const VERSION = (() => { try { return JSON.parse(fs.readFileSync(join(PKG_ROOT, 'package.json'), 'utf8')).version; } catch { return ''; } })();
-
-// ---------- arg parsing (non interattivo) ----------
-function parseArgs(argv) {
-  const a = { _: [], flags: {} };
-  for (let i = 0; i < argv.length; i++) {
-    const t = argv[i];
-    if (t === '--copy') a.flags.mode = 'copy';
-    else if (t === '--link') a.flags.mode = 'link';
-    else if (t === '--all') a.flags.all = true;
-    else if (t === '-y' || t === '--yes') a.flags.yes = true;
-    else if (t === '--ccstatusline') a.flags.cc = true;
-    else if (t === '--no-ccstatusline') a.flags.cc = false;
-    else if (t === '--toolbelt') a.flags.toolbelt = true;
-    else if (t === '--impeccable') a.flags.impeccable = true;
-    else if (t === '--target') a.flags.target = argv[++i];
-    else if (t === '--project') a.flags.project = argv[++i];
-    else if (t === '--skills') a.flags.skills = argv[++i];
-    else if (t === '--agents') a.flags.agents = argv[++i];
-    else if (t === '-h' || t === '--help') a.flags.help = true;
-    else a._.push(t);
-  }
-  return a;
-}
-
-const HELP = `cleverOps installer
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const VERSION = JSON.parse(fs.readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+export const HELP = `cleverOps — skill, agent e tool per Claude Code e Codex
 
 Uso:
-  npx github:Cleversoft-IT/cleverOps-public                       # TUI interattiva
-  cleverops uninstall                                             # rimozione guidata
+  cleverops                                  wizard (terminale interattivo)
+  cleverops --all --target claude,codex        installa e riconcilia
+  cleverops uninstall --all --target codex    disinstalla offline dal registro
+  cleverops doctor [--json]                   diagnosi senza scritture o download
+  cleverops sync --target claude,codex         migrazioni e cambio canale plugin
+  cleverops restore <cartella-backup>         ripristina originali e link, offline
 
-Flag (provisioning non interattivo — basta passarne uno):
-  --target claude,codex,project   dove installare (default skill: claude,codex)
-                                  le skill con harness dedicato (frontmatter targets:)
-                                  vengono installate solo nei target compatibili
-  --project PATH                  cartella progetto (per target project; default cwd)
-  --copy | --link                 copia (default via npx) o symlink (solo da checkout git)
-  --all                           tutte le skill e gli agent
-  --skills a,b   --agents x.md    selezione specifica
-  --ccstatusline                  installa anche ccstatusline-gradient (npx)
-  --toolbelt                      installa il toolbelt CLI (rg, fd, tree, ast-grep, gh)
-  --impeccable                    installa impeccable (design system, esterno via npx)
+Flag (qualunque flag disabilita il wizard):
+  --target claude,codex,project   default: harness rilevati; project usa .claude/
+  --project PATH                progetto (default: directory corrente)
+  --all                         tutte le risorse compatibili
+  --skills a,b --agents x,y      nomi del manifest (agent anche con .md)
+  --copy                        copia autonoma, modalità predefinita
+  --from PATH --link             symlink solo da sorgente locale esplicita
+  --source ID                    una sorgente; se inaccessibile esce con 3
+  --no-private                   esclude il privato senza probe
+  --list [--json]                catalogo delle sorgenti accessibili
+  --verbose                     include i motivi delle sorgenti saltate
+  --toolbelt --ccstatusline --impeccable   extra esterni opzionali
+  --no-ccstatusline              non avvia l'extra ccstatusline
+  -y, --yes                     modalità non interattiva
+  -h, --help                    mostra questo aiuto
+
+Exit: 0 riuscito; 1 errore operativo; 2 uso/selezione non valida;
+      3 sorgente richiesta esplicitamente non disponibile.
 `;
-
-// ---------- core install ----------
-function backupIfNeeded(dst) {
-  if (fs.existsSync(dst) && !fs.lstatSync(dst).isSymbolicLink()) {
-    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const bak = `${dst}.bak-${stamp}`;
-    fs.renameSync(dst, bak);
-    return basename(bak);
+export function parseArgs(argv) {
+  const options = { command: 'install', mode: 'copy', project: process.cwd() };
+  let modeSet = false, commandSet = false, projectSet = false;
+  const values = new Map([['--target', 'targets'], ['--project', 'project'], ['--skills', 'skills'], ['--agents', 'agents'], ['--source', 'source'], ['--from', 'from']]);
+  const flags = new Map([['--all', 'all'], ['--no-private', 'noPrivate'], ['--list', 'list'], ['--json', 'json'], ['--verbose', 'verbose'], ['--toolbelt', 'toolbelt'], ['--ccstatusline', 'ccstatusline'], ['--impeccable', 'impeccable'], ['-y', 'yes'], ['--yes', 'yes'], ['-h', 'help'], ['--help', 'help']]);
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (values.has(arg)) {
+      const value = argv[++i];
+      if (!value || value.startsWith('-')) throw new UsageError(`Valore mancante per ${arg}.`);
+      const key = values.get(arg);
+      if (key === 'project') projectSet = true;
+      options[key] = ['targets', 'skills', 'agents'].includes(key) ? value.split(',').map(s => s.trim()) : value;
+    } else if (flags.has(arg)) options[flags.get(arg)] = true;
+    else if (arg === '--no-ccstatusline') options.ccstatusline = false;
+    else if (['--copy', '--link'].includes(arg)) {
+      if (modeSet && options.mode !== arg.slice(2)) throw new UsageError('--copy e --link sono alternativi.');
+      options.mode = arg.slice(2); modeSet = true;
+    } else if (!commandSet && ['install', 'uninstall', 'remove', 'doctor', 'sync', 'restore'].includes(arg)) {
+      options.command = arg === 'remove' ? 'uninstall' : arg; commandSet = true;
+    } else if (options.command === 'restore' && !options.backup && !arg.startsWith('-')) {
+      if (arg === 'restore') throw new UsageError('Comando restore ripetuto: indica la cartella del backup (./restore se omonima).');
+      options.backup = resolve(arg);
+    } else throw new UsageError(`Argomento sconosciuto: ${arg}. Usa --help.`);
   }
-  fs.rmSync(dst, { recursive: true, force: true });
-  return null;
-}
-
-function place(src, dst, mode) {
-  fs.mkdirSync(dirname(dst), { recursive: true });
-  const bak = backupIfNeeded(dst);
-  if (mode === 'link') fs.symlinkSync(src, dst);
-  else fs.cpSync(src, dst, { recursive: true });
-  return bak;
-}
-
-function doInstall({ targets, project, mode, skills, agents }) {
-  const results = [];
-  for (const t of targets) {
-    const dirs = t === 'project' ? projectDirs(project) : TARGET_DIRS[t];
-    for (const s of skills) {
-      const src = join(SKILLS_DIR, s);
-      if (!fs.existsSync(src)) { results.push(`✗ skill inesistente: ${s}`); continue; }
-      // Il target 'project' è la .claude/ del progetto → harness Claude Code.
-      const harness = t === 'codex' ? 'codex' : 'claude';
-      const st = skillTargets(s);
-      if (!st.includes(harness)) {
-        results.push(`↷ [${t}] skills/${s} saltata — solo ${st.map(x => HARNESS_LABEL[x] || x).join(' & ')}`);
-        continue;
-      }
-      const bak = place(src, join(dirs.skills, s), mode);
-      results.push(`✓ [${t}] skills/${s}${bak ? `  (backup: ${bak})` : ''}`);
-    }
-    for (const ag of agents) {
-      const src = join(AGENTS_DIR, ag);
-      if (!fs.existsSync(src)) { results.push(`✗ agent inesistente: ${ag}`); continue; }
-      const bak = place(src, join(dirs.agents, ag), mode);
-      results.push(`✓ [${t}] agents/${ag}${bak ? `  (backup: ${bak})` : ''}`);
+  if (options.command === 'restore') {
+    if (!options.backup && !options.help) throw new UsageError('Uso: cleverops restore <cartella-backup>');
+    const allowed = new Set(['command', 'mode', 'project', 'backup', 'help', 'verbose']);
+    if (modeSet || projectSet || Object.keys(options).some(key => !allowed.has(key))) {
+      throw new UsageError('restore accetta soltanto la cartella del backup, --help e --verbose.');
     }
   }
-  return results;
-}
-
-function doUninstall({ targets, project, skills, agents }) {
-  const results = [];
-  for (const t of targets) {
-    const dirs = t === 'project' ? projectDirs(project) : TARGET_DIRS[t];
-    for (const s of skills) {
-      const dst = join(dirs.skills, s);
-      if (fs.existsSync(dst) || fs.lstatSync(dst, { throwIfNoEntry: false })) {
-        fs.rmSync(dst, { recursive: true, force: true }); results.push(`✓ rimossa [${t}] ${s}`);
-      }
-    }
-    for (const ag of agents) {
-      const dst = join(dirs.agents, ag);
-      if (fs.existsSync(dst)) { fs.rmSync(dst, { recursive: true, force: true }); results.push(`✓ rimosso [${t}] ${ag}`); }
-    }
+  if (options.command === 'sync' && (options.all || options.skills || options.agents)) {
+    throw new UsageError('sync non accetta selezioni: ometti --all, --skills e --agents.');
   }
-  return results;
+  if (options.targets) resolveTargets(options.targets);
+  for (const kind of ['skills', 'agents']) if (options[kind]?.some(n => !NAME.test(kind === 'agents' ? n.replace(/\.(md|toml)$/, '') : n))) throw new UsageError(`Nomi non validi per --${kind}.`);
+  if (options.source && !ID.test(options.source)) throw new UsageError('ID --source non valido.');
+  if (options.mode === 'link' && !options.from) throw new UsageError('--link richiede --from <path>.');
+  if (options.json && !options.list && options.command !== 'doctor') throw new UsageError('--json richiede --list oppure doctor.');
+  if (options.list && options.command !== 'install') throw new UsageError('--list si usa senza altri comandi.');
+  if (options.command !== 'install' && (options.toolbelt || options.ccstatusline || options.impeccable)) throw new UsageError('Gli extra si usano solo durante install.');
+  options.interactive = !argv.some(a => a.startsWith('-')) && ['install', 'uninstall'].includes(options.command);
+  if (options.command === 'install' && !options.list && !options.interactive && !options.help && !options.all && !options.skills?.length && !options.agents?.length && !options.toolbelt && !options.ccstatusline && !options.impeccable) throw new UsageError('Niente da installare: usa --all oppure --skills/--agents.');
+  options.project = resolve(options.project);
+  return options;
 }
-
-function runCcstatusline() {
+export function runExtras(options) {
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  console.log('\n› Avvio onboarding ccstatusline-gradient…');
-  const r = spawnSync(npx, ['-y', 'ccstatusline-gradient@latest', '--onboard'], { stdio: 'inherit' });
-  if (r.status !== 0) console.warn('ccstatusline: onboarding non completato.');
+  const extras = [
+    [options.toolbelt, 'toolbelt', 'bash', [join(ROOT, 'extras', 'toolbelt', 'install.sh')]],
+    [options.ccstatusline, 'ccstatusline', npx, ['-y', 'ccstatusline-gradient@latest', '--onboard']],
+    [options.impeccable, 'impeccable', npx, ['-y', 'impeccable', 'install']],
+  ];
+  for (const [enabled, name, cmd, args] of extras) if (enabled) {
+    if (name === 'toolbelt' && process.platform === 'win32') throw new Error('Toolbelt: install.sh richiede una shell Unix.');
+    const result = spawnSync(cmd, args, { stdio: 'inherit' });
+    if (result.error || result.status !== 0) throw new Error(`Extra ${name} non completato (${result.error?.message || result.status || result.signal}).`);
+  }
 }
-
-function runToolbelt() {
-  if (process.platform === 'win32') { console.warn('Toolbelt: script non supportato su Windows; vedi skill ai-dev-toolbelt.'); return; }
-  const script = join(PKG_ROOT, 'extras', 'toolbelt', 'install.sh');
-  if (!fs.existsSync(script)) { console.warn('Toolbelt: install.sh non trovato.'); return; }
-  console.log('\n› Installo il toolbelt CLI (rg · fd · tree · ast-grep · gh)…');
-  const r = spawnSync('bash', [script], { stdio: 'inherit' });
-  if (r.status !== 0) console.warn('Toolbelt: installazione non completata (vedi output sopra).');
-}
-
-function runImpeccable() {
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  console.log('\n› Installo impeccable (design system, dipendenza esterna)…');
-  const r = spawnSync(npx, ['-y', 'impeccable', 'install'], { stdio: 'inherit' });
-  if (r.status !== 0) console.warn('impeccable: installazione non completata.');
-}
-
-// ---------- non interattivo ----------
-function nonInteractive(args, uninstall) {
-  const f = args.flags;
-  const targets = (f.target || 'claude').split(',').map(s => s.trim()).filter(Boolean);
-  const project = f.project || process.cwd();
-  const mode = f.mode || 'copy';
-  const allSkills = listSkills(), allAgents = listAgents();
-  const skills = f.all ? allSkills : (f.skills ? f.skills.split(',').map(s => s.trim()) : []);
-  const agents = f.all ? allAgents : (f.agents ? f.agents.split(',').map(s => s.trim()) : []);
-  const results = uninstall
-    ? doUninstall({ targets, project, skills, agents })
-    : doInstall({ targets, project, mode, skills, agents });
-  console.log(results.join('\n'));
-  if (!uninstall && f.cc) runCcstatusline();
-  if (!uninstall && f.toolbelt) runToolbelt();
-  if (!uninstall && f.impeccable) runImpeccable();
-}
-
-// Hint per i menu: prima frase della description in SKILL.md.
-function skillHint(name) {
+async function main(argv) {
+  const options = parseArgs(argv);
+  if (options.help) { console.log(HELP); return; }
+  if (options.interactive && (!process.stdin.isTTY || !process.stdout.isTTY)) throw new UsageError('Terminale non interattivo: usa --all --target claude,codex oppure --help.');
+  options.warn = message => process.stderr.write(`Avviso: ${message}\n`);
+  if (options.command === 'restore') {
+    console.log(restoreBackup(options.backup).join('\n'));
+    return;
+  }
+  if (!options.list) options.targets = resolveTargets(options.targets);
+  // Un registro illeggibile blocca ogni modifica, anche della cache.
+  if (!options.list) readRegistry();
+  if (options.command === 'uninstall') {
+    if (options.interactive) {
+      const { runWizard } = await import('./tui.mjs');
+      const entries = readRegistry().entries;
+      let results = [];
+      const menu = kind => [...new Set(entries.filter(e => e.kind === kind).map(e => e.name))].map(name => ({ value: name, label: name, tag: [] }));
+      const pick = await runWizard({ skills: menu('skill'), agents: menu('agent'), det: detectHarness(), version: VERSION, uninstall: true,
+        sources: [{ id: 'registro locale', status: 'offline' }],
+        install: p => (results = uninstall({ ...options, ...p, targets: resolveTargets(p.targets) })) });
+      console.log(pick ? results.join('\n') : 'Annullato.');
+      return;
+    }
+    if (!options.skills && !options.agents) options.all = true;
+    console.log(uninstall(options).join('\n')); return;
+  }
+  let tui;
+  if (options.interactive) tui = await import('./tui.mjs');
+  const load = () => loadSources(ROOT, { ...options, readOnly: options.command === 'doctor' });
+  const loaded = tui ? await tui.probeSources(load) : await load();
   try {
-    const md = fs.readFileSync(join(SKILLS_DIR, name, 'SKILL.md'), 'utf8');
-    const m = md.match(/^description:\s*(.+)$/m);
-    if (!m) return undefined;
-    let d = m[1].trim().replace(/^["']|["']$/g, '').replace(/^\[LEGACY[^\]]*\]\s*/i, '');
-    d = d.split(/(?<=[.!?])\s/)[0];
-    return d.length > 64 ? d.slice(0, 61) + '…' : d;
-  } catch { return undefined; }
+    const items = catalog(loaded.sources, options.warn);
+    if (options.list) {
+      const list = items.map(({ source, path, ...item }) => ({ ...item, source: source.id, visibility: source.manifest.visibility }));
+      if (options.json) console.log(JSON.stringify({ sources: loaded.statuses, items: list }, null, 2));
+      else console.log(list.map(i => `${i.kind}\t${i.name}\t${i.source}\t${i.targets.join(',')}${i.visibility === 'private' ? ' ⟨interno⟩' : ''}`).join('\n'));
+      return;
+    }
+    if (options.command === 'doctor') {
+      const report = { sources: loaded.statuses, ...doctor({ sources: loaded.sources, items, ...options }) };
+      console.log(options.json ? JSON.stringify(report, null, 2) : [
+        ...report.sources.map(s => `sorgente ${s.id}: ${s.status}`),
+        ...report.issues.map(issue => `Problema: ${issue}`),
+        ...report.entries.map(e => `[${e.harness}] ${e.name}: ${e.status}${e.plugin ? '; plugin attivo: esegui sync' : ''}`),
+        ...report.migrations.map(c => `legacy ${c.name}: ${c.reason}${!c.removed && !c.backup && !c.replacements.length ? '; sostituta non disponibile' : ''}`),
+        !report.entries.length && !report.migrations.length ? 'Nessuna installazione o migrazione rilevata.' : '',
+      ].filter(Boolean).join('\n'));
+      return;
+    }
+    let results = [];
+    const execute = chosen => {
+      const result = install({ sources: loaded.sources, items, selected: selectItems(items, chosen), ...chosen,
+        sync: chosen.command === 'sync', hasExtras: chosen.hasExtras || chosen.toolbelt || chosen.ccstatusline || chosen.impeccable });
+      if (result.blocked) process.exitCode = 1;
+      results = result.messages;
+      return results;
+    };
+    if (tui) {
+      const menu = kind => items.filter(i => i.kind === kind).map(i => ({ value: i.name, label: i.name, hint: i.category,
+        tag: [...(i.source.manifest.visibility === 'private' ? ['interno'] : []), ...(i.targets.length === 1 ? [i.targets[0] === 'codex' ? 'Codex' : 'Claude Code'] : []), ...(i.legacy ? ['legacy'] : [])] }));
+      const pick = await tui.runWizard({ skills: menu('skill'), agents: menu('agent'), det: detectHarness(), isDev: false, version: VERSION, sources: loaded.statuses,
+        install: p => execute({ ...options, ...p, targets: resolveTargets(p.targets), hasExtras: p.extras.length > 0 }) });
+      if (!pick) { console.log('Annullato.'); return; }
+      if (results.length) console.log(results.join('\n'));
+      runExtras(Object.fromEntries(pick.extras.map(name => [name, true])));
+    } else {
+      console.log(execute(options).join('\n'));
+      if (options.command === 'install') runExtras(options);
+    }
+  } finally { loaded.release(); }
 }
-
-// ---------- interattivo (TUI Ink → bin/tui.mjs) ----------
-async function interactive(uninstall) {
-  const det = detectHarness();
-  const skills = listSkills().map((s) => {
-    const st = skillTargets(s);
-    // Tag mostrato solo per le skill con harness dedicato (default: entrambi, niente rumore).
-    return { value: s, label: s, tag: st.length === 1 ? HARNESS_LABEL[st[0]] : undefined, hint: skillHint(s) };
-  });
-  const agents = listAgents().map((a) => ({ value: a, label: a.replace(/\.md$/, '') }));
-
-  const project = process.cwd();
-  // L'install di skill/agent avviene DENTRO la TUI (step con spinner): passiamo la callback.
-  const install = (pick) => uninstall
-    ? doUninstall({ targets: pick.targets, project, skills: pick.skills, agents: pick.agents })
-    : doInstall({ targets: pick.targets, project, mode: pick.mode, skills: pick.skills, agents: pick.agents });
-
-  const { runWizard } = await import('./tui.mjs');
-  const pick = await runWizard({ skills, agents, det, isDev: IS_DEV_CHECKOUT, version: VERSION, uninstall, install });
-  if (!pick) { console.log('Annullato.'); return; }
-
-  if (!uninstall && pick.skills.includes('transcribe') && !fs.existsSync(join(HOME, '.whisper-env'))) {
-    console.log("⚠ La skill 'transcribe' richiede l'env Python ~/.whisper-env con Whisper (assente).");
-  }
-
-  if (!uninstall) {
-    if (pick.extras.includes('toolbelt')) runToolbelt();
-    if (pick.extras.includes('ccstatusline')) runCcstatusline();
-    if (pick.extras.includes('impeccable')) runImpeccable();
-  }
-
-  console.log('\n✓ Fatto. Riavvia Claude Code / Codex per caricare le novità.');
-}
-
-// ---------- main ----------
-const args = parseArgs(process.argv.slice(2));
-if (args.flags.help) { console.log(HELP); process.exit(0); }
-const uninstall = args._[0] === 'uninstall' || args._[0] === 'remove';
-const hasFlags = args.flags.all || args.flags.skills || args.flags.agents || args.flags.target || args.flags.toolbelt || args.flags.impeccable;
-// Flag di selezione espliciti → modalità non interattiva (anche senza -y).
-// Nessun flag → TUI interattiva.
-if (hasFlags) {
-  nonInteractive(args, uninstall);
-} else {
-  interactive(uninstall).catch(e => { console.error(e); process.exit(1); });
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main(process.argv.slice(2)).catch(e => { console.error(`Errore: ${e.message}`); process.exitCode = e.exitCode || 1; });
 }

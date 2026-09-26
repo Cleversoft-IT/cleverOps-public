@@ -9,7 +9,7 @@ import { BRAND, SPLASH, ART_SLANT, ART_SMALL, lerpHex } from './style.mjs';
 const h = React.createElement;
 
 // ------------------------------------------------------------------ Banner
-function Banner({ det, version }) {
+function Banner({ det, version, sources = [] }) {
   const cols = process.stdout.columns || 80;
   const art = cols >= 50 ? ART_SLANT : ART_SMALL;
   const W = Math.max(...art.map((l) => l.length), 1);
@@ -25,6 +25,7 @@ function Banner({ det, version }) {
       : h(Text, { dimColor: true }, '○ ' + label);
   return h(Box, { flexDirection: 'column', marginTop: 1, marginBottom: 1, paddingX: 1 },
     ...lines,
+    h(Text, { dimColor: true }, sources.map(s => `${s.id}: ${s.status}`).join(' · ')),
     h(Box, { marginTop: 1 }, h(Text, { dimColor: true }, `skill · agent · tool  ·  Claude Code & Codex${version ? '  ·  v' + version : ''}`)),
     h(Box, null,
       h(Text, { dimColor: true }, 'rilevati  '),
@@ -36,23 +37,28 @@ function Banner({ det, version }) {
 }
 
 // ------------------------------------------------------------- MultiSelect
-function MultiSelect({ title, items, initial = [], filterable = false, onSubmit }) {
+function MultiSelect({ title, items, initial = [], filterable = false, minSelected = 0, onSubmit }) {
   const [filter, setFilter] = useState('');
   const [cursor, setCursor] = useState(0);
   const [selected, setSelected] = useState(() => new Set(initial));
+  const [error, setError] = useState('');
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return q ? items.filter((it) => (it.label + ' ' + (it.tag || '') + ' ' + (it.hint || '')).toLowerCase().includes(q)) : items;
+    return q ? items.filter((it) => (it.label + ' ' + (it.tag || []).join(' ') + ' ' + (it.hint || '')).toLowerCase().includes(q)) : items;
   }, [filter, items]);
 
   const cur = filtered.length ? Math.min(cursor, filtered.length - 1) : 0;
 
   useInput((input, key) => {
-    if (key.return) return onSubmit([...selected]);
+    if (key.return) {
+      if (selected.size < minSelected) return setError('Seleziona almeno una destinazione con spazio.');
+      return onSubmit([...selected]);
+    }
     if (key.upArrow) return setCursor(() => Math.max(0, cur - 1));
     if (key.downArrow) return setCursor(() => Math.min(filtered.length - 1, cur + 1));
     if (input === ' ') {
+      setError('');
       const it = filtered[cur];
       if (it) setSelected((s) => { const n = new Set(s); n.has(it.value) ? n.delete(it.value) : n.add(it.value); return n; });
       return;
@@ -70,6 +76,7 @@ function MultiSelect({ title, items, initial = [], filterable = false, onSubmit 
 
   return h(Box, { flexDirection: 'column', paddingX: 1 },
     h(Text, { bold: true }, title),
+    error ? h(Text, { color: 'red' }, error) : null,
     filterable ? h(Text, { dimColor: true }, filter ? `filtro: ${filter}` : 'digita per filtrare…') : null,
     h(Box, { flexDirection: 'column', marginTop: filterable ? 0 : 1 },
       ...(filtered.length === 0
@@ -82,7 +89,7 @@ function MultiSelect({ title, items, initial = [], filterable = false, onSubmit 
               h(Text, { color: BRAND }, active ? '› ' : '  '),
               h(Text, { color: on ? BRAND : undefined, dimColor: !on }, on ? '◼ ' : '◻ '),
               h(Text, { bold: active, color: on ? BRAND : undefined }, it.label),
-              it.tag ? h(Text, { color: 'cyan' }, ' ⟨' + it.tag + '⟩') : null,
+              ...(it.tag || []).map(tag => h(Text, { key: tag, color: 'cyan' }, ' ⟨' + tag + '⟩')),
               it.hint ? h(Text, { dimColor: true }, '  ' + it.hint) : null,
             );
           })),
@@ -149,32 +156,23 @@ function Spinner() {
   return h(Text, { color: BRAND }, frames[i]);
 }
 
-// step di installazione con spinner (run è sync; piccolo dwell per far girare lo spinner)
-function Installing({ label, run, onDone }) {
-  const [done, setDone] = useState(false);
-  const [results, setResults] = useState([]);
+// Gli errori asincroni arrivano al chiamante e all'exit code della CLI.
+function Installing({ label, run, onDone, onError }) {
   useEffect(() => {
-    const t1 = setTimeout(() => {
-      let r = [];
-      try { r = run() || []; } catch (e) { r = ['errore: ' + (e && e.message ? e.message : e)]; }
-      setResults(r);
-      setDone(true);
-      setTimeout(() => onDone(), 900);
-    }, 550);
-    return () => clearTimeout(t1);
+    let active = true;
+    Promise.resolve().then(run).then(() => { if (active) onDone(); }, e => { if (active) onError(e); });
+    return () => { active = false; };
   }, []);
-  return h(Box, { flexDirection: 'column', paddingX: 1 },
-    done
-      ? h(Text, null, h(Text, { color: BRAND }, '✓ '), label.replace('…', ' completata'))
-      : h(Text, null, h(Spinner, null), '  ', label),
-    done && results.length
-      ? h(Box, { flexDirection: 'column', marginTop: 1 }, ...results.map((r, i) => h(Text, { key: i, dimColor: true }, r)))
-      : null,
-  );
+  return h(Box, { paddingX: 1 }, h(Spinner), h(Text, null, '  ' + label));
+}
+
+export async function probeSources(load) {
+  const app = render(h(Box, null, h(Spinner), h(Text, null, '  Verifica delle sorgenti…')));
+  try { return await load(); } finally { app.unmount(); await app.waitUntilExit(); }
 }
 
 // --------------------------------------------------------------------- App
-function App({ skills, agents, det, isDev, version, uninstall, install, onDone }) {
+function App({ skills, agents, det, isDev, version, uninstall, install, onDone, onError, sources }) {
   const [step, setStep] = useState('skills');
   const [pick, setPick] = useState({ skills: [], agents: [], extras: [], targets: [], mode: 'copy' });
   const upd = (patch) => setPick((p) => ({ ...p, ...patch }));
@@ -186,7 +184,7 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone }
   ];
   const targetItems = [
     { value: 'claude', label: 'Claude Code', hint: det.claude ? '~/.claude · rilevato' : '~/.claude · non rilevato' },
-    { value: 'codex', label: 'Codex', hint: det.codex ? '~/.codex · rilevato' : '~/.codex · non rilevato' },
+    { value: 'codex', label: 'Codex', hint: det.codex ? '~/.agents/skills · rilevato' : '~/.agents/skills · non rilevato' },
     { value: 'project', label: 'Progetto', hint: 'cartella corrente → .claude/' },
   ];
   const targetInit = ['claude', 'codex'].filter((t) => det[t]);
@@ -195,7 +193,7 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone }
     { value: 'copy', label: 'Copia', hint: 'file autonomi' },
   ];
 
-  const frame = (child) => h(Box, { flexDirection: 'column' }, h(Banner, { det, version }), child);
+  const frame = (child) => h(Box, { flexDirection: 'column' }, h(Banner, { det, version, sources }), child);
 
   if (step === 'skills')
     return frame(h(MultiSelect, {
@@ -224,9 +222,10 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone }
   if (step === 'where')
     return frame(h(MultiSelect, {
       key: 'where',
+      minSelected: 1,
       title: uninstall ? 'Da dove rimuovo?' : 'Dove installo skill e agent?', items: targetItems, initial: targetInit,
       onSubmit: (v) => {
-        const tv = v.length ? v : (targetInit.length ? targetInit : ['claude']);
+        const tv = v;
         upd({ targets: tv });
         setStep((!uninstall && isDev) ? 'mode' : 'confirm');
       },
@@ -256,6 +255,7 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone }
       label: uninstall ? 'Rimozione…' : 'Installazione…',
       run: () => install(pick),
       onDone: () => onDone(pick),
+      onError,
     }));
 
   return frame(h(Confirm, {
@@ -263,16 +263,17 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone }
     message: uninstall ? 'Rimuovo?' : 'Procedo?', recap,
     onSubmit: (yes) => {
       if (!yes) return onDone(null);
-      const np2 = pick.skills.length || pick.agents.length;
-      if (np2 && install) return setStep('installing');
+      if (install) return setStep('installing');
       return onDone(pick);
     },
   }));
 }
 
-export async function runWizard(ctx) {
+export async function runWizard(ctx, renderOptions = {}) {
   let result = null;
-  const app = render(h(App, { ...ctx, onDone: (r) => { result = r; app.unmount(); } }), { exitOnCtrlC: true });
-  try { await app.waitUntilExit(); } catch { /* ctrl-c */ }
+  let error;
+  const app = render(h(App, { ...ctx, onError: e => { error = e; app.unmount(); }, onDone: (r) => { result = r; app.unmount(); } }), { exitOnCtrlC: true, ...renderOptions });
+  await app.waitUntilExit();
+  if (error) throw error;
   return result;
 }
