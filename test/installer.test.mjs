@@ -6,7 +6,7 @@ import { parse } from 'smol-toml';
 import { treeHash, hashEntries } from '../bin/lib/treehash.mjs';
 import { validateManifest } from '../bin/lib/manifest.mjs';
 import { move } from '../bin/lib/registry.mjs';
-import { sandbox, fixture, write, json, read, snapshot, backupEntries, captured, ROOT } from './helpers.mjs';
+import { sandbox, fixture, write, json, read, snapshot, backupEntries, captured, ROOT, CLI } from './helpers.mjs';
 
 const ok = result => assert.equal(result.status, 0, result.stderr || result.stdout);
 
@@ -75,6 +75,13 @@ test('argomenti invalidi e non-TTY: exit 2, nessuna scrittura', t => {
     const before = snapshot(s.home), r = s.run(args);
     assert.equal(r.status, 2, `${args}: ${r.stderr}`); assert.deepEqual(snapshot(s.home), before, String(args));
   }
+});
+
+test('CLI lanciata tramite symlink (npx, node_modules/.bin): esegue davvero', t => {
+  const s = sandbox(t), link = join(s.root, 'cleverops');
+  fs.symlinkSync(CLI, link);
+  const r = captured(process.execPath, [link, '--help'], { env: s.env, encoding: 'utf8' });
+  ok(r); assert.match(r.stdout, /Exit: 0 riuscito/);
 });
 
 test('--toolbelt rimosso: exit 2 con indicazione, nessuna scrittura', t => {
@@ -187,7 +194,9 @@ test('npm pack: inventario runtime e install dal tarball senza .git', t => {
   const pkg = join(s.root, 'package'); assert(!fs.existsSync(join(pkg, '.git')));
   // Le sole dipendenze runtime già installate; il codice e le risorse vengono dal tarball.
   fs.symlinkSync(join(ROOT, 'node_modules'), join(pkg, 'node_modules'));
-  const r = captured(process.execPath, [join(pkg, 'bin', 'cleverops.mjs'), '--all', '--target', 'claude,codex', '--no-private'], { cwd: s.root, env: { ...s.env, CLEVEROPS_SOURCES: JSON.stringify([{ id: 'public', path: pkg }]) }, encoding: 'utf8', timeout: 30000 });
+  // Come npx: il bin si lancia tramite un symlink.
+  const bin = join(s.root, 'bin-link'); fs.symlinkSync(join(pkg, 'bin', 'cleverops.mjs'), bin);
+  const r = captured(process.execPath, [bin, '--all', '--target', 'claude,codex', '--no-private'], { cwd: s.root, env: { ...s.env, CLEVEROPS_SOURCES: JSON.stringify([{ id: 'public', path: pkg }]) }, encoding: 'utf8', timeout: 30000 });
   ok(r); assert(read(s.registry).entries.length > 0); assert(read(s.registry).entries.every(e => e.commit === null));
 });
 

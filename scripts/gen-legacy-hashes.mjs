@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Legge esclusivamente le risorse nella allowlist; non esporta contenuti o percorsi.
 import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import { NAME } from '../bin/lib/manifest.mjs';
 import { excluded, treeHash } from '../bin/lib/treehash.mjs';
+import { isEntryPoint } from '../bin/lib/entry.mjs';
 
 const git = (repo, args, encoding = 'utf8') => execFileSync('git', ['-C', repo, ...args], { encoding, maxBuffer: 128 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 export function generateLegacy(repos, names) {
@@ -50,7 +50,7 @@ export function generateLegacy(repos, names) {
   }
   return { schemaVersion: 1, skills: sets.skills, agents: sets.agents };
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   try {
     const repos = [], names = [];
     const args = process.argv.slice(2);

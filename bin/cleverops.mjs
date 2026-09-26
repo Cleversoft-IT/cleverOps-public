@@ -8,6 +8,7 @@ import { catalog, NAME, ID, UsageError } from './lib/manifest.mjs';
 import { loadSources } from './lib/sources.mjs';
 import { detectHarness, doctor, install, resolveTargets, selectItems, uninstall } from './lib/install.mjs';
 import { readRegistry, restoreBackup } from './lib/registry.mjs';
+import { isEntryPoint } from './lib/entry.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = JSON.parse(fs.readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
@@ -176,6 +177,6 @@ async function main(argv) {
     }
   } finally { loaded.release(); }
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main(process.argv.slice(2)).catch(e => { console.error(`Errore: ${e.message}`); process.exitCode = e.exitCode || 1; });
 }
