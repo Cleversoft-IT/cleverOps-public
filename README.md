@@ -45,15 +45,14 @@ Il pacchetto non è su npm:
 
 | Skill | In una riga |
 |---|---|
-| `drupal-expert`, `drupal-migration`, `drupal-security` | Sviluppo, migrazioni e sicurezza Drupal |
+| `drupal11-*` (7 skill) | Drupal 11.4: moduli, query/Views, configurazione, cache, theming, deploy/test/sicurezza, migrazioni ([dettagli](docs/drupal11/README.md)) |
 | `ddev-expert`, `docker-local` | Ambienti di sviluppo locale (DDEV, Docker Compose) |
 | `ionic-skills` | App Ionic/Capacitor |
 | `plan-auditor` | Revisione dei piani di implementazione prima di scrivere codice (Codex) |
 | `subagent-dev-with-codex` | Loop cross-model: Claude scrive il piano, Codex lo audita (Claude Code) |
 | `transcribe` | Audio → testo con Whisper in locale |
 
-> Il repo è in riordino: le skill Drupal verranno sostituite da una suite `drupal11-*`
-> aggiornata, `ionic-skills` viene riscritta. Il catalogo sempre
+> Il repo è in riordino: `ionic-skills` viene riscritta. Il catalogo sempre
 > aggiornato è sul sito.
 
 ## Opzioni dell'installer
