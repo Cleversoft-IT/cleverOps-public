@@ -38,7 +38,14 @@ for dir in \
   "$HOME/.claude/plans" \
   "$HOME/.codex/plans"
 do
-  [ -d "$dir" ] && find "$dir" -maxdepth 1 -type f -name '*.md' -printf '%T@ %TY-%Tm-%Td %TH:%TM %p\n'
+  [ -d "$dir" ] || continue
+  # `find -printf` is GNU-only (missing on macOS/BSD find). `-print0` is
+  # portable, and per-file `stat` reuses the same GNU/BSD fallback as the
+  # fingerprint commands below — no extra interpreter (Python or otherwise)
+  # required.
+  find "$dir" -maxdepth 1 -type f -name '*.md' -print0 | while IFS= read -r -d '' f; do
+    stat -c '%Y %y %n' "$f" 2>/dev/null || stat -f '%m %Sm %N' "$f"
+  done
 done
 ```
 
@@ -66,14 +73,15 @@ Maintain continuity across audit rounds in the same conversation. A re-audit is 
 
 At the start of every audit or re-audit round, identify the selected plan and compute a content fingerprint before judging whether it changed. Prefer SHA-256 over MD5 when available. Include file size and modification time as supporting metadata, but do not use them as the source of truth because they can be misleading.
 
-Use a command such as:
+Use a command such as (works on both Linux and macOS: `sha256sum`/`stat -c` are
+GNU-only, `shasum`/`stat -f` are the BSD/macOS equivalents):
 
 ```bash
-sha256sum "$PLAN_PATH"
-stat -c '%s bytes %y' "$PLAN_PATH"
+sha256sum "$PLAN_PATH" 2>/dev/null || shasum -a 256 "$PLAN_PATH"
+stat -c '%s bytes %y' "$PLAN_PATH" 2>/dev/null || stat -f '%z bytes %Sm' "$PLAN_PATH"
 ```
 
-If `sha256sum` is unavailable, use `md5sum` as a fallback and say so in the report.
+If neither `sha256sum` nor `shasum` is available, use `md5sum` as a fallback and say so in the report.
 
 Compare the fingerprint to the previous fingerprint for the same plan in the current conversation:
 
@@ -163,11 +171,11 @@ Respect dirty worktrees. Never revert, clean, stage, commit, or edit files durin
 
 For post-implementation re-audits, track both the plan fingerprint and an implementation fingerprint.
 
-Prefer a fingerprint derived from the diff being audited, not just file mtimes. For uncommitted work, use:
+Prefer a fingerprint derived from the diff being audited, not just file mtimes. For uncommitted work, use (the `sha256sum || shasum` fallback covers macOS, which has no `sha256sum`):
 
 ```bash
-git diff --binary | sha256sum
-git diff --cached --binary | sha256sum
+git diff --binary | { sha256sum 2>/dev/null || shasum -a 256; }
+git diff --cached --binary | { sha256sum 2>/dev/null || shasum -a 256; }
 git status --short
 ```
 
@@ -175,7 +183,7 @@ For committed work, fingerprint the exact commit or range:
 
 ```bash
 git rev-parse HEAD
-git diff --binary BASE..HEAD | sha256sum
+git diff --binary BASE..HEAD | { sha256sum 2>/dev/null || shasum -a 256; }
 ```
 
 If the implementation fingerprint changed since the previous post-implementation audit, re-read the relevant diff and changed files before judging. If it is unchanged, do not repeat a full audit; cite the matching fingerprint and restate only unresolved findings.

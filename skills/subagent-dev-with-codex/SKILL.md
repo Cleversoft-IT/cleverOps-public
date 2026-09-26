@@ -1,20 +1,20 @@
 ---
 name: subagent-dev-with-codex
-description: Use when entering plan mode, planning a multi-step development or refactor task, or orchestrating subagent-driven development where GPT-5.6 (via the local Codex CLI on the ChatGPT flat plan) participates alongside Anthropic models. Triggers on plan mode, breaking work into subagents, orchestrating an implementation, or wanting a cross-model audit or second opinion.
+description: Use when entering plan mode, planning a multi-step development or refactor task, or orchestrating subagent-driven development where Codex's default model (via the local Codex CLI on the ChatGPT flat plan; overridable per call with `-m <slug>`) participates alongside Anthropic models. Triggers on plan mode, breaking work into subagents, orchestrating an implementation, or wanting a cross-model audit or second opinion.
 ---
 
-# Subagent development with Codex (GPT-5.6)
+# Subagent development with Codex
 
 ## Overview
 
-Two harnesses, one flow. The **orchestrator** — the main model of the Claude Code session — authors plans and coordinates the work; **GPT-5.6** (run through the local **Codex CLI** on the ChatGPT *flat plan*) audits those plans via its `plan-auditor` skill and works as one of the available subagent models. Anthropic and OpenAI each stay in their own harness — the only bridge is the Codex CLI. There is **no** shared model endpoint, and you never route the main model to GPT via a proxy (that abuses the flat plan and risks an account ban — the Codex CLI path is the only ToS-safe one).
+Two harnesses, one flow. The **orchestrator** — the main model of the Claude Code session — authors plans and coordinates the work; **the model configured as Codex's default** (overridable per call with `-m <slug>`, e.g. the model the user has chosen), run through the local **Codex CLI** on the ChatGPT *flat plan*, audits those plans via its `plan-auditor` skill and works as one of the available subagent models. Anthropic and OpenAI each stay in their own harness — the only bridge is the Codex CLI. There is **no** shared model endpoint, and you never route the main model to an OpenAI model via a proxy (that abuses the flat plan and risks an account ban — the Codex CLI path is the only ToS-safe one).
 
-Core principle: **the orchestrator authors, GPT-5.6 audits, the orchestrator decides.** The plan is written and owned by the orchestrator; Codex is the external cross-model reviewer and an implementation worker — never the plan's author.
+Core principle: **the orchestrator authors, Codex audits, the orchestrator decides.** The plan is written and owned by the orchestrator; Codex is the external cross-model reviewer and an implementation worker — never the plan's author.
 
 ## When to use
 
 - You entered **plan mode** for a multi-step development, refactor, or design task.
-- You're doing **subagent-driven development** and want GPT-5.6 as an available worker.
+- You're doing **subagent-driven development** and want Codex's default model as an available worker.
 - You want a **cross-model audit or second opinion** (the two models disagree → signal to dig).
 
 **When NOT to use:** trivial one-file edits, pure Q&A, or tasks with no planning/subagent structure. Don't drag Codex in just to add a model.
@@ -25,14 +25,14 @@ This skill does not hardcode which model implements and who reviews: that is the
 
 - **If worker preferences are already recorded** — in the project's `CLAUDE.md` (look for a `## Subagent worker preferences` section) or stated earlier in this conversation — use them. Do not ask again.
 - **Otherwise**, at the first orchestration decision (after plan approval, before dispatching any worker), ask the user with **one single `AskUserQuestion` call** containing both questions:
-  1. *Default worker for implementation chunks* — offer: an Anthropic top-tier agent (opus), an Anthropic fast agent (sonnet), GPT-5.6 via Codex, or mixed per task at the orchestrator's judgment (mark this one "(Recommended)").
-  2. *Code review of completed chunks* — offer: the orchestrator reviews diffs directly (mark "(Recommended)" — a dispatched same-model reviewer adds latency, not judgment), a dedicated reviewer agent, or a cross-model review via Codex.
+  1. *Default worker for implementation chunks* — offer: an Anthropic top-tier agent (opus), an Anthropic fast agent (sonnet), Codex's default model (overridable with `-m <slug>`), or mixed per task at the orchestrator's judgment (mark this one "(Recommended)").
+  2. *Code review of completed chunks* — offer: the orchestrator reviews diffs directly (mark "(Recommended)" — a dispatched same-model reviewer adds latency, not judgment), a dedicated reviewer agent, or a cross-model review via Codex (see *cross-model review* in step 6 below: the reviewer must be a model different from whoever wrote the chunk).
 - After the answers, **offer to persist them**: propose appending a short `## Subagent worker preferences` section to the project's `CLAUDE.md` so future sessions skip the question. Only write it if the user accepts.
 - If `AskUserQuestion` is unavailable in the harness, ask the same two questions in chat.
 
 ## Why Codex calls stall (read this first)
 
-An audit or implementation run on GPT-5.6 at high reasoning effort explores the repo itself and **routinely takes several minutes** (measured: trivial prompt ≈ 6–15 s; a real repo-exploring run 3.5–4 min; big tasks far more). Every stall mode follows from ignoring that:
+An audit or implementation run on Codex's default model at high reasoning effort explores the repo itself and **routinely takes several minutes** (measured: trivial prompt ≈ 6–15 s; a real repo-exploring run 3.5–4 min; big tasks far more). Every stall mode follows from ignoring that:
 
 1. **Foreground Bash kills the run.** Claude's Bash tool defaults to a 120 s timeout (600 s max). A foreground `codex exec` dies mid-run and you get nothing back.
 2. **Codex-plugin subagents can't deliver open-ended work.** Plugin rescue agents background the job and return only a "started as task-…" stub that nobody collects, or hit the foreground timeout. Either way the orchestrator waits for a result that never arrives.
@@ -45,15 +45,23 @@ Consequences: **always run Codex in background (`run_in_background: true`), alwa
 
 ```bash
 # Bash tool with run_in_background: true
+SCRATCH="$(mktemp -d)"  # or the current session's own scratch directory, if the harness provides one
 codex exec -s read-only --color never \
-  -o "$SCRATCHPAD/codex-audit.md" \
+  -o "$SCRATCH/codex-audit.md" \
   'Use $plan-auditor to audit the plan at /abs/path/to/plan.md. Context from this conversation: <decisions, constraints, goals from chat>. Write the report in the user'\''s language.'
 ```
 
 - `-o <file>` writes **only the final message** — read that file when notified; stdout is polluted by hook chatter.
 - `-s read-only` for audits/reviews; `-s workspace-write` for implementation tasks.
+- `-m <slug>` overrides Codex's default model for this call (e.g. the model the user has chosen); omit it to use whatever model Codex is configured to default to.
 - `--skip-git-repo-check` outside a git repo.
-- Follow-ups reuse the session: `codex exec resume <SESSION_ID> -o <file> "<follow-up>"`. **Audit re-rounds MUST resume** — plan-auditor's fingerprint/continuity logic assumes successive rounds happen in the same Codex conversation. `resume` accepts only a subset of flags: `-o` yes, `-s`/`--color` NOT supported (exit 2 on codex-cli 0.145.0); sandbox and model carry over. Capture the UUID from the round-1 output (`grep -m1 "session id:" <task-output-file> | grep -oE '[0-9a-f]{8}-[0-9a-f-]{27}'`); `--last` (newest session) is safe only if no other Codex run could have started in between.
+- Follow-ups reuse the session, but `-s`/`--color` are **exec-level** flags: they must be repeated *before* `resume`, not after — `resume` itself rejects them (`error: unexpected argument '-s' found`). The working form is:
+
+  ```bash
+  codex exec -s read-only --color never resume <SESSION_ID> -o <file> "<follow-up>"
+  ```
+
+  **Audit re-rounds MUST resume** — plan-auditor's fingerprint/continuity logic assumes successive rounds happen in the same Codex conversation. Repeat `-s read-only` (or `-s workspace-write` for an implementation follow-up) on every resume call; don't assume the sandbox mode from round 1 still applies. The model is **not guaranteed** to be inherited either — if you need a specific model on a resumed call, pass `-m <slug>` the same way, before `resume`. Only `resume`'s own flags go after it: `-o`, `-m`, `--json`, `--last`, `--skip-git-repo-check`, and a few advanced ones — run `codex exec resume --help` on your installed version to get the authoritative list, since it can change between releases (checked against codex-cli 0.155.1 and 0.157.0 while writing this). Capture the UUID from the round-1 output (`grep -m1 "session id:" <task-output-file> | grep -oE '[0-9a-f]{8}-[0-9a-f-]{27}'`); `--last` (newest session) is safe only if no other Codex run could have started in between.
 
 ## The flow
 
@@ -67,9 +75,11 @@ Audit when the plan has 3+ non-trivial steps, touches several files/modules, or 
 
 Use the recipe above (read-only). Do **not** pre-read the codebase to "prep" the auditor — Codex explores itself. Give it only the **absolute path of the plan file** plus the decisions/constraints from the conversation. Don't busy-poll while it works.
 
-### 3. Audit loop until `go` (hard cap: 3 rounds = initial + max 2 re-audits)
+### 3. Audit loop until `go` (default cap: 3 rounds = initial + max 2 re-audits)
 
 Read the report. Integrate the material findings into the plan file (or consciously reject them — you own the plan), then re-audit **in the same Codex session** (`codex exec resume <SESSION_ID>`, distinct `-o` file per round). Repeat until the verdict is `go`. If there is still no `go` after 3 total rounds, stop looping and present the plan anyway, surfacing the unresolved findings to the user.
+
+The 3-round cap is the **default**, not a hard limit: if the user explicitly authorizes more rounds ("keep auditing until it's a go"), keep looping past round 3 under that explicit authorization — same-session re-audits, same convergence goal — until the verdict is `go` or the user says to stop.
 
 ### 4. Present the vetted plan
 
@@ -79,9 +89,9 @@ Present via `ExitPlanMode`, citing the audit verdict (or the open findings if th
 
 Resolve worker preferences (see *Worker preferences* above — recorded ones, or one `AskUserQuestion` call). Break the approved plan into independent tasks; coordinate, synthesize, and decide per task which worker runs it.
 
-### 6. Subagent development → GPT-5.6 is one worker among several
+### 6. Subagent development → Codex's default model is one worker among several
 
-Dispatch per the recorded preferences. For a critical or ambiguous piece, run it on **both** a GPT-5.6 agent and an Anthropic agent and reconcile — divergence is a cheap correctness signal, and a genuinely independent second opinion requires a DIFFERENT model, not a second instance of the same one.
+Dispatch per the recorded preferences. For a critical or ambiguous piece, run it on **both** a Codex agent and an Anthropic agent and reconcile — divergence is a cheap correctness signal, and a genuinely independent second opinion requires a DIFFERENT model, not a second instance of the same one. This is what "cross-model review" means throughout this skill: every chunk is reviewed by a model **different** from the one that wrote it — never the same model marking its own work.
 
 ### 7. Optional post-implementation audit
 
@@ -92,9 +102,9 @@ For risky or sprawling work, once implementation is done, Codex can verify the c
 | Task shape | Prefer |
 |---|---|
 | Plan authoring | **The orchestrator** — never delegated |
-| Plan audit (`$plan-auditor`) | GPT-5.6, background exec (read-only), loop ≤ 3 rounds |
-| Post-implementation audit vs approved plan | GPT-5.6, background exec (read-only), optional |
-| Implementation chunk | Per recorded worker preferences (Anthropic agent or GPT-5.6 `-s workspace-write`) |
+| Plan audit (`$plan-auditor`) | Codex's default model, background exec (read-only), loop ≤ 3 rounds by default (more with explicit user go-ahead) |
+| Post-implementation audit vs approved plan | Codex's default model, background exec (read-only), optional |
+| Implementation chunk | Per recorded worker preferences (Anthropic agent or Codex's default model, `-s workspace-write`) |
 | Code review of a chunk | Per recorded worker preferences |
 | Broad read-only codebase search / mapping | Anthropic `Explore` agent |
 | Orchestration, synthesis, final judgment | The orchestrator — never delegate this |
@@ -102,7 +112,7 @@ For risky or sprawling work, once implementation is done, Codex can verify the c
 
 ## Bootstrap / install
 
-Run `install.sh` in this skill directory (or verify manually). It ensures the Codex CLI is installed (`npm i -g @openai/codex`) and logged in with the ChatGPT plan (`codex login`, auth_mode `chatgpt` in `~/.codex/auth.json`). The audit flow also requires the **`plan-auditor`** skill installed in `~/.codex/skills/` — the cleverOps installer sets up both.
+Run `install.sh` in this skill directory (or verify manually). It ensures the Codex CLI is installed (`npm i -g @openai/codex`) and logged in with the ChatGPT plan (`codex login`, auth_mode `chatgpt` in `${CODEX_HOME:-$HOME/.codex}/auth.json`). The audit flow also requires the **`plan-auditor`** skill installed where Codex reads user skills from, `~/.agents/skills/` (`${CODEX_HOME:-$HOME/.codex}/skills/` is the older, legacy location) — the cleverOps installer sets up both.
 
 ## Common mistakes
 
@@ -111,8 +121,8 @@ Run `install.sh` in this skill directory (or verify manually). It ensures the Co
 - **Re-asking preferences every session.** If the project's `CLAUDE.md` records them, use them silently.
 - **Any foreground Codex call for real work.** Bash timeout kills it; you get nothing. Background + file output, always.
 - **Re-auditing in a fresh session instead of `codex exec resume <SESSION_ID>`.** Breaks plan-auditor's fingerprint continuity; `--last` in an orchestrated flow can resume the wrong session.
-- **Audit loop without the round cap.** Plugin bugs or a stubborn auditor can keep the loop from converging; 3 rounds, then present with open findings.
-- **Polling without a hard deadline.** A stuck `status` can outlive the finished work. Deadline, then read the output file anyway; canonical transcripts live in `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`.
+- **Audit loop without the round cap.** Plugin bugs or a stubborn auditor can keep the loop from converging; 3 rounds by default, then present with open findings — unless the user has explicitly authorized more rounds, in which case keep going under that authorization.
+- **Polling without a hard deadline.** A stuck `status` can outlive the finished work. Deadline, then read the output file anyway; canonical transcripts live in `${CODEX_HOME:-$HOME/.codex}/sessions/YYYY/MM/DD/rollout-*.jsonl`.
 - **Pre-exploring the repo to feed the auditor.** Wastes orchestrator context; Codex explores itself.
 - **Pasting the audit verdict unread or auto-applying every finding.** The audit is input, not truth — verify findings against the repo, integrate or consciously reject, then present.
 - **Delegating the orchestration/synthesis to a subagent.** That's the orchestrator's job — keep it.

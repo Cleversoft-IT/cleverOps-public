@@ -15,7 +15,7 @@
     "ionic-skills": {"category": "Mobile"},
     "plan-auditor": {"category": "Workflow", "targets": ["codex"]},
     "subagent-dev-with-codex": {"category": "Workflow", "targets": ["claude"]},
-    "transcribe": {"category": "AI", "requires": {"path": "~/.whisper-env"}}
+    "transcribe-local": {"category": "AI", "replaces": ["transcribe"], "requires": {"path": "~/.whisper-env"}}
   },
   "agents": {}
 }
