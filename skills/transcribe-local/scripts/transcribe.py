@@ -9,10 +9,11 @@ Uso:
     python transcribe.py <file-audio> [opzioni]
 
 Opzioni:
-    --model    MODELLO   Modello Whisper. Default: medium.
+    --model    MODELLO   Modello Whisper. Default: turbo (alias di
+                         large-v3-turbo: qualità quasi-large, leggero).
                          Disponibili: tiny|base|small|medium|large|large-v2|
-                         large-v3|turbo (alias di large-v3-turbo). Usa
-                         --list-models per vedere quali sono già in cache.
+                         large-v3|turbo. Usa --list-models per vedere quali
+                         sono già in cache.
     --language LINGUA    Codice lingua ISO (it, en, ...). Default: it
     --format   FORMATO   txt | md. Default: txt
     --output   PATH      Percorso file di output (default: stesso nome dell'audio)
@@ -20,6 +21,12 @@ Opzioni:
     --raw                Salva il testo grezzo senza pulizia/segmentazione
     --timestamps         Aggiunge i timestamp [mm:ss] a inizio di ogni paragrafo
     --list-models        Elenca i modelli disponibili (segnando quelli in cache) ed esce
+
+Interprete: lo script va eseguito con un Python che abbia Whisper e torch
+installati (vedi la sezione Setup nella SKILL.md di questa skill). Il
+percorso dell'interprete è deciso da chi invoca questo script tramite la
+variabile d'ambiente TRANSCRIBE_LOCAL_PYTHON (default:
+~/.whisper-env/bin/python).
 
 Il device usato viene sempre stampato prima di iniziare. Con --device cuda lo
 script si interrompe se la GPU non è disponibile (niente fallback silenzioso su CPU).
@@ -63,7 +70,11 @@ def resolve_device(requested: str) -> str:
     try:
         import torch
     except ImportError:
-        sys.exit("Errore: 'torch' non disponibile. Usa l'env ~/.whisper-env")
+        sys.exit(
+            "Errore: 'torch' non disponibile. Esegui questo script con "
+            "l'interprete dell'ambiente dedicato (variabile "
+            "TRANSCRIBE_LOCAL_PYTHON, default ~/.whisper-env/bin/python)."
+        )
 
     has_cuda = torch.cuda.is_available()
 
@@ -439,7 +450,7 @@ def segments_to_paragraphs(segments, with_timestamps: bool):
 def main():
     ap = argparse.ArgumentParser(description="Trascrizione audio con Whisper + pulizia")
     ap.add_argument("audio", nargs="?", help="file audio da trascrivere")
-    ap.add_argument("--model", default="medium")
+    ap.add_argument("--model", default="turbo")
     ap.add_argument("--language", default="it")
     ap.add_argument("--format", default="txt", choices=["txt", "md"])
     ap.add_argument("--output")
@@ -456,7 +467,11 @@ def main():
     try:
         import whisper
     except ImportError:
-        sys.exit("Errore: modulo 'whisper' non disponibile. Usa l'env ~/.whisper-env")
+        sys.exit(
+            "Errore: modulo 'whisper' non disponibile. Esegui questo script "
+            "con l'interprete dell'ambiente dedicato (variabile "
+            "TRANSCRIBE_LOCAL_PYTHON, default ~/.whisper-env/bin/python)."
+        )
 
     download_root = default_download_root()
 
