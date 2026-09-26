@@ -82,7 +82,7 @@ credenziali git, senza prompt.
 | `--impeccable` | installa [impeccable](https://impeccable.style) (dipendenza esterna) |
 | `--ccstatusline` | installa la statusline [ccstatusline-gradient](https://github.com/akkaz/ccstatusline-gradient) |
 
-Le skill Codex sono installate in `~/.agents/skills`. `doctor` diagnostica senza
+Le skill Codex sono installate in `~/.agents/skills`. `doctor` (anche `doctor --json`) diagnostica senza
 scritture, `sync` riconcilia migrazioni e plugin, `uninstall` usa il registro offline.
 Vedi la [guida dell’installer](docs/installer.md) per cache, backup, agent e test.
 
