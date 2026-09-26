@@ -178,7 +178,6 @@ function App({ skills, agents, det, isDev, version, uninstall, install, onDone, 
   const upd = (patch) => setPick((p) => ({ ...p, ...patch }));
 
   const extrasItems = [
-    { value: 'toolbelt', label: 'Toolbelt CLI', hint: 'rg, fd, tree, ast-grep, gh' },
     { value: 'ccstatusline', label: 'ccstatusline', hint: 'statusline per Claude Code' },
     { value: 'impeccable', label: 'impeccable', hint: 'design system (npx)' },
   ];

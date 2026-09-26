@@ -149,8 +149,8 @@ export default function ComeFunziona() {
           <Link href="/#skill" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
             → Skill
           </Link>
-          <Link href="/#toolbelt" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
-            → Toolbelt
+          <Link href="/#extra" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
+            → Extra
           </Link>
           <Link href="/#installa" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
             → Installer

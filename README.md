@@ -67,7 +67,6 @@ credenziali git, senza prompt.
 | `--list [--json]` | catalogo delle sorgenti accessibili |
 | `--source ID` / `--no-private` | seleziona una sorgente o esclude il privato |
 | `--verbose` | mostra anche i motivi delle sorgenti saltate |
-| `--toolbelt` | installa i CLI consigliati (rg, fd, tree, ast-grep, gh) |
 | `--impeccable` | installa [impeccable](https://impeccable.style) (dipendenza esterna) |
 | `--ccstatusline` | installa la statusline [ccstatusline-gradient](https://github.com/akkaz/ccstatusline-gradient) |
 
@@ -80,7 +79,7 @@ Vedi la [guida dell’installer](docs/installer.md) per cache, backup, agent e t
 ```
 bin/        installer TUI (Node + Ink)
 skills/     le skill (SKILL.md, per Claude Code e Codex)
-extras/     toolbelt CLI e script della demo
+extras/     script della demo (GIF della TUI)
 site/       sito vetrina (Next.js)
 scripts/    guardie di riservatezza e provenienza (vedi sotto)
 ```
