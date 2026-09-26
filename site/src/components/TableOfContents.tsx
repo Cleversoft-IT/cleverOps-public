@@ -45,7 +45,7 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
                 aria-current={isActive ? "true" : undefined}
                 className={`-ml-px block border-l py-1 pl-3 font-mono text-xs transition-colors ${
                   isActive
-                    ? "border-brand text-brand"
+                    ? "border-brand text-brand-ink"
                     : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--card-foreground)]"
                 }`}
               >

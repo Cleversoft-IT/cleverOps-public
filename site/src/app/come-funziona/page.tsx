@@ -2,23 +2,27 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CommandBlock } from "@/components/CommandBlock";
+import { catalog, hasAgents } from "@/lib/skills";
 
 export const metadata: Metadata = {
   title: "Come funziona — cleverOps",
-  description:
-    "Skill, agent, flusso di attivazione e integrazione col design system Cleversoft via impeccable.",
+  description: hasAgents
+    ? "Skill, agent, flusso di attivazione e integrazione col design system Cleversoft via impeccable."
+    : "Skill, flusso di attivazione e integrazione col design system Cleversoft via impeccable.",
 };
 
 const STEPS = [
   {
     n: "01",
     title: "Installi quello che ti serve",
-    body: "Con npx cleverops scegli skill e agent e li copi (o symlink) in Claude Code, Codex o nel progetto. Niente account, niente lock-in.",
+    body: `Con npx github:${catalog.repo} scegli ${
+      hasAgents ? "skill e agent e li installi" : "le skill e le installi"
+    } in Claude Code, Codex o nel progetto. Niente account, niente lock-in.`,
   },
   {
     n: "02",
-    title: "Claude le carica da sole",
-    body: "Ogni skill ha un SKILL.md con una description: il modello la attiva quando il contesto combacia (es. stai scrivendo una migration Drupal → si attiva drupal-migration).",
+    title: "L'assistente le carica da solo",
+    body: "Ogni skill ha un SKILL.md con una description che dice quando usarla: Claude Code o Codex la attiva quando il contesto combacia (es. chiedi di migrare dei dati → si attiva la skill che copre quel lavoro), senza richiamarla per nome.",
   },
   {
     n: "03",
@@ -33,7 +37,7 @@ export default function ComeFunziona() {
       <div className="mx-auto max-w-3xl">
         <Link
           href="/"
-          className="group inline-flex items-center gap-1.5 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand"
+          className="group inline-flex items-center gap-1.5 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
           catalogo
@@ -47,12 +51,16 @@ export default function ComeFunziona() {
           gli assistenti di codice. I concetti in due minuti.
         </p>
 
-        {/* Skill vs Agent */}
+        {/* Skill (e agent, se il catalogo ne ha) */}
         <section className="mt-12">
           <h2 className="font-mono text-xl font-semibold tracking-[-0.01em] text-[var(--card-foreground)]">
-            Skill e agent
+            {hasAgents ? "Skill e agent" : "Skill"}
           </h2>
-          <div className="mt-5 grid gap-px overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2">
+          <div
+            className={`mt-5 grid gap-px overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--border)] ${
+              hasAgents ? "sm:grid-cols-2" : ""
+            }`}
+          >
             <div className="bg-[var(--card)] p-5">
               <h3 className="font-mono text-base font-semibold text-[var(--card-foreground)]">
                 Skill
@@ -60,19 +68,21 @@ export default function ComeFunziona() {
               <p className="mt-2 font-sans text-sm leading-relaxed text-[var(--muted-foreground)]">
                 Una cartella con un{" "}
                 <code className="font-mono text-[var(--card-foreground)]">SKILL.md</code> e risorse
-                (script, reference, asset). Estende l&apos;assistente con conoscenza di dominio:
-                Drupal, DevOps, AI, design.
+                (script, reference, asset). Estende l&apos;assistente con conoscenza di dominio:{" "}
+                {catalog.categories.join(", ")}.
               </p>
             </div>
-            <div className="bg-[var(--card)] p-5">
-              <h3 className="font-mono text-base font-semibold text-[var(--card-foreground)]">
-                Agent
-              </h3>
-              <p className="mt-2 font-sans text-sm leading-relaxed text-[var(--muted-foreground)]">
-                Un subagent specializzato con prompt, strumenti e obiettivo propri. Lo lanci per
-                un compito intero (es. generare un preventivo) e lavora in autonomia.
-              </p>
-            </div>
+            {hasAgents && (
+              <div className="bg-[var(--card)] p-5">
+                <h3 className="font-mono text-base font-semibold text-[var(--card-foreground)]">
+                  Agent
+                </h3>
+                <p className="mt-2 font-sans text-sm leading-relaxed text-[var(--muted-foreground)]">
+                  Un subagent specializzato con prompt, strumenti e obiettivo propri. Lo lanci per
+                  un compito intero, dall&apos;inizio alla fine, e lavora in autonomia.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -87,7 +97,7 @@ export default function ComeFunziona() {
                 key={s.n}
                 className="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[var(--border)] py-5"
               >
-                <span className="font-mono text-sm text-brand">{s.n}</span>
+                <span className="font-mono text-sm text-brand-ink">{s.n}</span>
                 <div>
                   <h3 className="font-mono text-base font-semibold text-[var(--card-foreground)]">
                     {s.title}
@@ -107,10 +117,8 @@ export default function ComeFunziona() {
             Il design system, dentro le skill
           </h2>
           <p className="mt-3 font-sans text-sm leading-relaxed text-[var(--zinc-400)]">
-            Questo sito È la skill{" "}
-            <code className="font-mono text-[var(--zinc-200)]">cleversoft-design-system</code> messa
-            in pratica: stesso coral, stesso Geist Mono, stessi glifi. Il design system è scritto
-            nel formato di{" "}
+            Questo sito applica il design system di Cleversoft: stesso coral, stesso Geist Mono,
+            stessi glifi. Il design system è scritto nel formato di{" "}
             <a
               href="https://impeccable.style"
               target="_blank"
@@ -138,13 +146,13 @@ export default function ComeFunziona() {
         </section>
 
         <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-[var(--border)] pt-6 font-mono text-xs">
-          <Link href="/#skill" className="text-[var(--muted-foreground)] transition-colors hover:text-brand">
+          <Link href="/#skill" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
             → Skill
           </Link>
-          <Link href="/#toolbelt" className="text-[var(--muted-foreground)] transition-colors hover:text-brand">
+          <Link href="/#toolbelt" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
             → Toolbelt
           </Link>
-          <Link href="/#installa" className="text-[var(--muted-foreground)] transition-colors hover:text-brand">
+          <Link href="/#installa" className="text-[var(--muted-foreground)] transition-colors hover:text-brand-ink">
             → Installer
           </Link>
         </div>

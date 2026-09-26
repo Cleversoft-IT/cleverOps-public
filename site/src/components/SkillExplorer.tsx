@@ -42,7 +42,7 @@ export function SkillExplorer() {
               type="button"
               onClick={() => setQuery("")}
               aria-label="Cancella ricerca"
-              className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded text-[var(--muted-foreground)] hover:text-brand"
+              className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded text-[var(--muted-foreground)] hover:text-brand-ink"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -61,8 +61,8 @@ export function SkillExplorer() {
                 aria-pressed={active}
                 className={`rounded-md border px-2.5 py-1 font-mono text-xs lowercase transition-colors ${
                   active
-                    ? "border-brand/40 bg-brand/10 text-brand"
-                    : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-brand hover:border-brand/30"
+                    ? "border-brand/40 bg-brand/10 text-brand-ink"
+                    : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-brand-ink hover:border-brand/30"
                 }`}
               >
                 {f}

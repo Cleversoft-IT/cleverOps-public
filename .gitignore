@@ -6,7 +6,3 @@ __pycache__/
 *.m4a
 *.mp4
 node_modules/
-package-lock.json
-
-# Lockfile dell'installer; il sito viene gestito nella fase dedicata.
-!/package-lock.json

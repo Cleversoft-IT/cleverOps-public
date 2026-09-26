@@ -67,7 +67,7 @@ export function ToolbeltSection() {
                 href={t.docs}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand"
+                className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand-ink"
               >
                 docs <ArrowUpRight className="h-3 w-3" />
               </a>
@@ -113,7 +113,7 @@ export function ToolbeltSection() {
             href="https://github.com/akkaz/ccstatusline-gradient"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand"
+            className="mt-3 inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand-ink"
           >
             docs <ArrowUpRight className="h-3 w-3" />
           </a>

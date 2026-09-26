@@ -7,12 +7,12 @@ import { SkillExplorer } from "@/components/SkillExplorer";
 import { AgentCard } from "@/components/AgentCard";
 import { InstallerSection } from "@/components/InstallerSection";
 import { ToolbeltSection } from "@/components/ToolbeltSection";
-import { catalog } from "@/lib/skills";
+import { catalog, hasAgents, offerLabelSentence } from "@/lib/skills";
 
 const TOC = [
   { id: "skill", label: "Skill" },
   { id: "toolbelt", label: "Toolbelt" },
-  { id: "agent", label: "Agent" },
+  ...(hasAgents ? [{ id: "agent", label: "Agent" }] : []),
   { id: "installa", label: "Installer" },
 ];
 
@@ -26,19 +26,19 @@ export default function Home() {
             cleverOps<span className="text-brand">.</span>
           </h1>
           <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-[var(--muted-foreground)]">
-            Skill, agent e tool che il team Cleversoft installa
-            su Claude Code e Codex. Trova quello che ti serve, copia il comando, installa.
+            {offerLabelSentence} che il team Cleversoft installa su Claude Code e Codex. Trova
+            quello che ti serve, copia il comando, installa.
           </p>
           <div className="mt-5 max-w-xl">
             <CommandBlock command={`npx github:${catalog.repo}`} size="md" />
           </div>
           <p className="mt-2.5 font-sans text-sm text-[var(--muted-foreground)]">
             Installer interattivo. Per i dettagli e i flag vedi{" "}
-            <a href="#installa" className="text-brand hover:underline">
+            <a href="#installa" className="text-brand-ink hover:underline">
               Installer
             </a>
             ; per i concetti{" "}
-            <Link href="/come-funziona" className="text-brand hover:underline">
+            <Link href="/come-funziona/" className="text-brand-ink hover:underline">
               Come funziona
             </Link>
             .
@@ -52,24 +52,26 @@ export default function Home() {
           <Section
             id="skill"
             title="Skill"
-            intro="Conoscenza di dominio impacchettata (SKILL.md + risorse). Claude le attiva da sé quando il contesto combacia. Generate dai manifest reali in ../skills."
+            intro="Conoscenza di dominio impacchettata (SKILL.md + risorse). L'assistente le attiva da sé quando il contesto combacia. Elenco generato dal manifest del repository e dalle SKILL.md reali."
           >
             <SkillExplorer />
           </Section>
 
           <ToolbeltSection />
 
-          <Section
-            id="agent"
-            title="Agent"
-            intro="Subagent specializzati: prompt, strumenti e obiettivo propri. Li lanci per un compito intero."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              {catalog.agents.map((a) => (
-                <AgentCard key={a.name} agent={a} />
-              ))}
-            </div>
-          </Section>
+          {hasAgents && (
+            <Section
+              id="agent"
+              title="Agent"
+              intro="Subagent specializzati: prompt, strumenti e obiettivo propri. Li lanci per un compito intero."
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                {catalog.agents.map((a) => (
+                  <AgentCard key={a.name} agent={a} />
+                ))}
+              </div>
+            </Section>
+          )}
 
           <InstallerSection />
         </div>
@@ -82,7 +84,7 @@ export default function Home() {
               href={`https://github.com/${catalog.repo}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand"
+              className="inline-flex items-center gap-1 font-mono text-xs text-[var(--muted-foreground)] transition-colors hover:text-brand-ink"
             >
               repository <ArrowUpRight className="h-3 w-3" />
             </a>

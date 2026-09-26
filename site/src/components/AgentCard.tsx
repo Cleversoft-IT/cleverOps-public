@@ -1,11 +1,23 @@
 import { Bot } from "lucide-react";
 import { CommandBlock } from "./CommandBlock";
+import { HarnessBadge } from "./HarnessBadge";
 import type { Agent } from "@/lib/skills";
 
 export function AgentCard({ agent }: { agent: Agent }) {
   return (
     <article className="flex flex-col rounded-lg border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm transition-colors hover:bg-[color-mix(in_oklch,var(--card)_94%,var(--foreground))]">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+          <span className="h-1 w-1 shrink-0 rounded-full bg-brand" aria-hidden />
+          {agent.category}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {agent.targets.map((t) => (
+            <HarnessBadge key={t} target={t} />
+          ))}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-brand text-white">
           <Bot className="h-5 w-5" />
         </span>
@@ -22,7 +34,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
           installa
         </span>
         <div className="mt-2">
-          <CommandBlock command={agent.command} emphasize={`${agent.name}.md`} />
+          <CommandBlock command={agent.command} emphasize={agent.name} />
         </div>
       </div>
     </article>
