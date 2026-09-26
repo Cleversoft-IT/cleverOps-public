@@ -99,5 +99,7 @@ jobs:
           ref="${{ github.event.pull_request.base.sha || github.sha }}"
           git show "$ref:.gitleaks.toml" > "$RUNNER_TEMP/gitleaks.toml"
           mkdir -p "$RUNNER_TEMP/no-ignore"
+          # Conserva tutta la storia e include i diff dei merge, anche sulle PR.
           "$RUNNER_TEMP/gitleaks" git --redact --no-banner --ignore-gitleaks-allow \
-            --config "$RUNNER_TEMP/gitleaks.toml" --gitleaks-ignore-path "$RUNNER_TEMP/no-ignore" .
+            --config "$RUNNER_TEMP/gitleaks.toml" --gitleaks-ignore-path "$RUNNER_TEMP/no-ignore" \
+            --log-opts="--full-history --all -m" .

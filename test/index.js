@@ -7,4 +7,5 @@ import './tui-extras.test.mjs';
 import './review.test.mjs';
 import './validate-skills.test.mjs';
 import './deploy-site-gate.test.mjs';
+import './gitleaks-merge.test.mjs';
 import './marketplace.test.mjs';
