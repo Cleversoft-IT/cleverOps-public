@@ -90,8 +90,9 @@ scripts/    guardie di riservatezza e provenienza (vedi sotto)
 Questo repo è pubblico; il materiale aziendale vive in un repo privato separato.
 Per evitare fughe di dati:
 
-- **Una volta per clone**: `bash scripts/setup-hooks.sh`. Attiva gli hook `pre-commit` e
-  `pre-push`, che eseguono `gitleaks`, `scripts/check-public.mjs` (contenuti riservati) e
+- **Una volta per clone**, e di nuovo quando cambiano le guardie (gli hook lo segnalano):
+  `bash scripts/setup-hooks.sh`. Installa gli hook `pre-commit` e `pre-push` in una copia
+  fissa dentro `.git/`, attiva su qualunque branch (anche orphan), che eseguono `gitleaks`, `scripts/check-public.mjs` (contenuti riservati) e
   `scripts/check-provenance.mjs` (la storia deve discendere dal commit iniziale di questo
   repo). La denylist dei termini riservati è un file locale, mai committato.
 - **Branch di lavoro**: solo `work/**`; `main` accetta solo PR con i check `provenance`,
