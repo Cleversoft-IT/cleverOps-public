@@ -88,6 +88,11 @@ export function parseArgs(argv) {
   options.project = resolve(options.project);
   return options;
 }
+// Wizard con soli extra: nessuna risorsa da installare, quindi nessun target da risolvere.
+export function wizardInstall(execute, options, pick) {
+  if (!pick.skills.length && !pick.agents.length) return [];
+  return execute({ ...options, ...pick, targets: resolveTargets(pick.targets), hasExtras: pick.extras.length > 0 });
+}
 export function runExtras(options) {
   const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
   const extras = [
@@ -161,7 +166,7 @@ async function main(argv) {
       const menu = kind => items.filter(i => i.kind === kind).map(i => ({ value: i.name, label: i.name, hint: i.category,
         tag: [...(i.source.manifest.visibility === 'private' ? ['interno'] : []), ...(i.targets.length === 1 ? [i.targets[0] === 'codex' ? 'Codex' : 'Claude Code'] : []), ...(i.legacy ? ['legacy'] : [])] }));
       const pick = await tui.runWizard({ skills: menu('skill'), agents: menu('agent'), det: detectHarness(), isDev: false, version: VERSION, sources: loaded.statuses,
-        install: p => execute({ ...options, ...p, targets: resolveTargets(p.targets), hasExtras: p.extras.length > 0 }) });
+        install: p => wizardInstall(execute, options, p) });
       if (!pick) { console.log('Annullato.'); return; }
       if (results.length) console.log(results.join('\n'));
       runExtras(Object.fromEntries(pick.extras.map(name => [name, true])));

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
 import { runWizard } from '../bin/tui.mjs';
+import { wizardInstall } from '../bin/cleverops.mjs';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 test('TUI propaga il fallimento della callback di installazione', async () => {
@@ -33,4 +34,12 @@ test('TUI mantiene il menu e mostra un messaggio per target vuoti', async () => 
   for (const input of [' ', '\r', '\r']) { await delay(80); stdin.write(input); }
   const pick = await result; assert.deepEqual(pick.targets, ['claude']); assert.equal(calls, 1);
   stdin.end(); stdout.end(); stderr.end();
+});
+
+test('wizard con soli extra: nessuna installazione e nessun target richiesto', () => {
+  let calls = 0; const execute = () => { calls++; return ['installato']; };
+  assert.deepEqual(wizardInstall(execute, {}, { skills: [], agents: [], extras: ['impeccable'], targets: [] }), []);
+  assert.equal(calls, 0);
+  assert.deepEqual(wizardInstall(execute, {}, { skills: ['alpha'], agents: [], extras: [], targets: ['claude'] }), ['installato']);
+  assert.equal(calls, 1);
 });

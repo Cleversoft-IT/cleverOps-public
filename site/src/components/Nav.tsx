@@ -19,6 +19,7 @@ export function Nav() {
             <Link href="/#agent" className="transition-colors hover:text-brand-ink">agent</Link>
           )}
           <Link href="/#installa" className="transition-colors hover:text-brand-ink">installa</Link>
+          <Link href="/#extra" className="transition-colors hover:text-brand-ink">extra</Link>
           <Link href="/come-funziona/" className="transition-colors hover:text-brand-ink">come funziona</Link>
         </div>
         <span className="hidden h-4 w-px bg-[var(--border)] sm:block" />
