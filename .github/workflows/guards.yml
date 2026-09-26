@@ -30,7 +30,15 @@ jobs:
       - name: La storia discende solo dal seed
         env:
           SEED_SHA: ${{ vars.SEED_SHA }}
-        run: node "$RUNNER_TEMP/check-provenance.mjs" HEAD
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          # Sulle PR da fork GitHub non passa le variabili di repository: senza seed il check
+          # fallisce comunque (fail-closed), qui con un messaggio che indica la procedura giusta.
+          if [ -z "$SEED_SHA" ] && [ -n "$HEAD_REPO" ] && [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo '✗ check-provenance: PR da fork, SEED_SHA non disponibile. Procedura sostitutiva (snapshot approvato su un branch work/fork-<n>).' >&2
+            exit 1
+          fi
+          node "$RUNNER_TEMP/check-provenance.mjs" HEAD
 
   public-guard:
     name: public-guard
