@@ -141,7 +141,10 @@ export function install({ sources, items, selected, ...options }) {
       }
     }
     for (const { item, harness, dest, plugin } of jobs) {
-      if (plugin) { warn(`Installazione [${harness}] ${item.name} rifiutata: plugin abilitato. Disabilitalo per tornare alle copie.`); continue; }
+      if (plugin) {
+        if (!options.sync) warn(`Installazione [${harness}] ${item.name} rifiutata: plugin abilitato. Disabilitalo per tornare alle copie.`);
+        continue;
+      }
       const previous = registry.entries.find(e => e.dest === dest);
       if (!previous && currentMigrations.some(c => c.path === dest && !c.known)) {
         warn(`Migrazione dubbia: ${dest}; contenuto lasciato invariato.`);

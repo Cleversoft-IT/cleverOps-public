@@ -1,0 +1,97 @@
+{
+  "name": "cleverops-public",
+  "owner": {
+    "name": "Cleversoft IT"
+  },
+  "description": "Skill e tool DevOps/AI di Cleversoft IT per Claude Code e Codex (Drupal, Ionic, workflow con Codex, trascrizione locale). Installer TUI.",
+  "plugins": [
+    {
+      "name": "drupal-local-env",
+      "source": "./plugins/drupal-local-env",
+      "description": "Use when setting up, running or troubleshooting the local development environment of a Drupal project, either DDEV (.ddev/config.yaml, ddev start / drush / composer, snapshots, add-ons, Mutagen, Xdebug, ddev share, ddev pull) or a plain Docker Compose stack (compose.yaml / docker-compose.yml with PHP-FPM, nginx, MariaDB/MySQL, Redis).",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-config-management",
+      "source": "./plugins/drupal11-config-management",
+      "description": "Use when working with Drupal 11 Configuration Management — drush cex/cim/cget/cset/cdel, config/sync directory, site UUID errors, config_split, config_ignore, config_readonly, recipes (drush recipe / vendor/bin/dr recipe:apply), default content and content:export, settings.php $config[...] overrides, config/install vs config/optional, *.schema.yml, strictConfigSchema test failures.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-devops-testing-security",
+      "source": "./plugins/drupal11-devops-testing-security",
+      "description": "Use when working on Drupal 11 deployment (composer recommended-project, composer-patches, drush deploy, drush updatedb / cim / deploy:hook / cache:warm, hook_update_N vs hook_post_update_NAME vs hook_deploy_NAME), settings.php hardening (trusted_host_patterns, hash_salt, config_sync_directory), PHPUnit 11 with attributes, KernelTestBase / BrowserTestBase, Nightwatch, major-version upgrades (D10→D11, D11→D12 readiness, choosing migration vs upgrade for D7 sites), and security (SQL injection, XSS, CSRF, AccessResult, TrustedCallbackInterface, SA-CORE).",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-frontend-theming",
+      "source": "./plugins/drupal11-frontend-theming",
+      "description": "Use when working on Drupal 11 frontend — Twig 3 templates, Single Directory Components (SDC), custom themes generated via Starterkit, *.info.yml / *.libraries.yml, libraries-override and libraries-extend, preprocess hooks, Olivero / Claro / Stark, jQuery removal (core/once, native dialog).",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-migrate",
+      "source": "./plugins/drupal11-migrate",
+      "description": "Use when importing data into Drupal 11 with the Migrate API — writing migration YAML (migrations/*.yml plugins or migrate_plus config entities), CSV sources (migrate_source_csv), JSON/XML/HTTP sources (migrate_plus url with data fetcher/parser), process pipelines (static_map, migration_lookup, sub_process, entity_lookup, entity_generate, skip_on_empty), custom source/process plugins with the MigrateSource / MigrateProcess PHP attributes, running drush migrate:import --update --limit --idlist, migrate:rollback, migrate:reset-status, migrate:messages, debugging stuck or failing migrations, and planning D6/D7 → D11 migrations now that Migrate Drupal is deprecated (11.4) and removed in D12.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-module-development",
+      "source": "./plugins/drupal11-module-development",
+      "description": "Use when writing or modifying custom Drupal 11 module code under modules/custom/ — services, dependency injection, plugins, hooks, controllers, forms, entity types.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-performance-caching",
+      "source": "./plugins/drupal11-performance-caching",
+      "description": "Use when working on Drupal 11 cache metadata (tags / contexts / max-age), render array cacheability, lazy builders, BigPipe, page_cache vs dynamic_page_cache, Cache API, Redis or Memcache backends, CacheableResponse, TrustedCallbackInterface.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-views-and-queries",
+      "source": "./plugins/drupal11-views-and-queries",
+      "description": "Use when reading data from Drupal 11 — EntityQuery, Views plugins (field/filter/sort/argument/relationship/area/style/row/display/cache/access/pager), hook_views_data and hook_views_data_alter, hook_query_TAG_alter, hook_views_query_alter, computed Views fields, node_access tagging, and the choice between Views, EntityQuery, raw Database API, and Search API.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Drupal"
+    },
+    {
+      "name": "ionic-capacitor-app",
+      "source": "./plugins/ionic-capacitor-app",
+      "description": "Use when creating, modifying or migrating an Ionic 9 + Capacitor 8 mobile app with Angular, React or Vue - scaffolding, ion-tabs navigation, routing and guards, Preferences storage, dark mode, i18n, push notifications, native sync/build and App Store / Play Store release - plus the optional modules RevenueCat subscriptions and paywalls, AdMob with UMP consent and ATT, and onboarding.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Mobile"
+    },
+    {
+      "name": "subagent-dev-with-codex",
+      "source": "./plugins/subagent-dev-with-codex",
+      "description": "Use when entering plan mode, planning a multi-step development or refactor task, or orchestrating subagent-driven development where Codex's default model (via the local Codex CLI on the ChatGPT flat plan; overridable per call with `-m <slug>`) participates alongside Anthropic models.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "Workflow"
+    },
+    {
+      "name": "transcribe-local",
+      "source": "./plugins/transcribe-local",
+      "description": "Trascrizione offline/locale di file audio (mp3, wav, m4a, mp4...) con Whisper, senza servizi esterni né chiavi API — ripulendo e formattando il risultato in paragrafi leggibili.",
+      "version": "0.2.0",
+      "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+      "category": "AI"
+    }
+  ]
+}

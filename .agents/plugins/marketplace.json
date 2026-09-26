@@ -1,0 +1,140 @@
+{
+  "name": "cleverops-public",
+  "interface": {
+    "displayName": "cleverops-public"
+  },
+  "plugins": [
+    {
+      "name": "drupal-local-env",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal-local-env"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-config-management",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-config-management"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-devops-testing-security",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-devops-testing-security"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-frontend-theming",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-frontend-theming"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-migrate",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-migrate"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-module-development",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-module-development"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-performance-caching",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-performance-caching"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "drupal11-views-and-queries",
+      "source": {
+        "source": "local",
+        "path": "./plugins/drupal11-views-and-queries"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Drupal"
+    },
+    {
+      "name": "ionic-capacitor-app",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ionic-capacitor-app"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Mobile"
+    },
+    {
+      "name": "plan-auditor",
+      "source": {
+        "source": "local",
+        "path": "./plugins/plan-auditor"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Workflow"
+    },
+    {
+      "name": "transcribe-local",
+      "source": {
+        "source": "local",
+        "path": "./plugins/transcribe-local"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "AI"
+    }
+  ]
+}

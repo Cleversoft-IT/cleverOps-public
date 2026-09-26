@@ -10,6 +10,11 @@
     "bin/",
     "skills/",
     "agents/",
+    ".claude-plugin/marketplace.json",
+    ".agents/plugins/marketplace.json",
+    "scripts/gen-marketplace.mjs",
+    "scripts/validate-skills.mjs",
+    "docs/marketplace.md",
     "README.md",
     "cleverops.json",
     "cleverops.schema.json",
@@ -41,6 +46,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node --test test/index.js"
+    "test": "node --test test/index.js",
+    "marketplace:generate": "node scripts/gen-marketplace.mjs",
+    "marketplace:check": "node scripts/gen-marketplace.mjs --check"
   }
 }

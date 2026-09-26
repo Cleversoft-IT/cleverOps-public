@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Auditor"
+  short_description: "Audit coding-agent implementation plans"
+  default_prompt: "Use $plan-auditor to audit the latest implementation plan."

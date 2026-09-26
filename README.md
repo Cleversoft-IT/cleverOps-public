@@ -41,6 +41,18 @@ Il pacchetto non è su npm:
 
 <sub>`…` = `npx github:Cleversoft-IT/cleverOps-public`</sub>
 
+## Plugin marketplace
+
+Claude Code e Codex hanno cataloghi generati da `cleverops.json`, con un plugin
+per skill e solo le risorse compatibili con ciascun host. Il marketplace pubblico
+si chiama `cleverops-public`; chi ha accesso può aggiungere anche `cleverops-internal`.
+
+Seguire la [guida marketplace](docs/marketplace.md) per **aggiunta e installazione**
+del plugin, cambio canale con `sync`, controllo con `doctor` e nuova sessione.
+La guida descrive anche il ritorno ai file, i namespace e gli aggiornamenti.
+Per rigenerare: `npm run marketplace:generate`; per il controllo CI:
+`npm run marketplace:check`.
+
 ## Cosa c'è dentro
 
 | Skill | In una riga |

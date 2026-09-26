@@ -171,11 +171,12 @@ globali o quelle di altri progetti. Formati di riferimento:
 [settings Claude](https://code.claude.com/docs/en/settings) e
 [configurazione plugin Codex](https://developers.openai.com/plugins/build/plugins#enable-or-disable-a-plugin-for-a-repo).
 
-L'adattatore riconosce le voci per singola risorsa (`nome-skill@marketplace`) nei
-cataloghi `.claude-plugin/marketplace.json` e `.agents/plugins/marketplace.json`,
-e i bundle `cleverops-public`/`cleverops-internal` (oppure `cleverops` nel catalogo).
-In assenza di catalogo, i bundle usano lo stesso nome per plugin e marketplace.
-La fase marketplace dovrà usare questi identificatori o estendere l'adattatore.
+I cataloghi generati `.claude-plugin/marketplace.json` e
+`.agents/plugins/marketplace.json` usano un plugin per risorsa:
+`nome-skill@cleverops-public` oppure `nome-skill@cleverops-internal`, identificatori
+già riconosciuti dall'adattatore anche senza catalogo disponibile. Per compatibilità
+restano riconosciuti i bundle `cleverops-public`/`cleverops-internal` (oppure
+`cleverops` nel catalogo); i nuovi cataloghi non li generano.
 Non si deduce un'abilitazione dalla sola presenza della cache del plugin.
 
 Dopo aver aggiunto il marketplace **e installato/abilitato il plugin**, eseguire
@@ -183,4 +184,7 @@ Dopo aver aggiunto il marketplace **e installato/abilitato il plugin**, eseguire
 in backup), poi l'harness viene saltato. Anche install riconcilia il canale e rifiuta
 nuove copie coperte da un plugin attivo. Per tornare ai file, disabilitare il plugin
 prima di installare. I test coprono entrambi i passaggi con configurazioni sintetiche;
-la verifica dei cataloghi e dei client reali appartiene alla fase marketplace.
+la [guida marketplace](marketplace.md) documenta installazione, aggiornamenti e
+collaudo nei client. Il target `codex` legge il config utente, non quello del
+progetto. Gli agent Codex restano sul canale file: nei riferimenti disponibili
+non è documentato un formato per includerli nei plugin.

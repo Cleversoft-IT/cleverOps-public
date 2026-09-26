@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "drupal11-frontend-theming",
+  "version": "0.2.0",
+  "description": "Use when working on Drupal 11 frontend — Twig 3 templates, Single Directory Components (SDC), custom themes generated via Starterkit, *.info.yml / *.libraries.yml, libraries-override and libraries-extend, preprocess hooks, Olivero / Claro / Stark, jQuery removal (core/once, native dialog).",
+  "author": {
+    "name": "Cleversoft IT"
+  },
+  "repository": "https://github.com/Cleversoft-IT/cleverOps-public.git",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "drupal11-frontend-theming",
+        "shortDescription": "Use when working on Drupal 11 frontend — Twig 3 templates, Single Directory Components (SDC), custom themes generated…",
+        "longDescription": "Use when working on Drupal 11 frontend — Twig 3 templates, Single Directory Components (SDC), custom themes generated via Starterkit, *.info.yml / *.libraries.yml, libraries-override and libraries-extend, preprocess hooks, Olivero / Claro / Stark, jQuery removal (core/once, native dialog). Use when deciding between Layout Builder, Paragraphs, and Blocks. Use when symptoms involve InvalidCssDefinitionException, missing assets, or stale Twig output.",
+        "developerName": "Cleversoft IT",
+        "category": "Drupal",
+        "defaultPrompt": [
+          "Usa la skill drupal11-frontend-theming."
+        ]
+      }
+    }
+  }
+}
