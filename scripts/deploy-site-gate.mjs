@@ -1,7 +1,6 @@
 // Eseguito dal workflow fidato su main; le API sono sostituibili nei test offline.
 import fs from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { isEntryPoint } from '../bin/lib/entry.mjs';
 
 const SHA = /^[a-f0-9]{40}$/;
 const skip = reason => ({ ready: false, reason });
@@ -86,6 +85,6 @@ async function main() {
   fs.appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(decision).filter(([key]) => key !== 'reason').map(([key, value]) => `${key}=${value}\n`).join(''));
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   main().catch(error => { console.error(error.message); process.exitCode = 1; });
 }

@@ -5,6 +5,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NAME, object, readJSON, validateManifest } from '../bin/lib/manifest.mjs';
 import { validateLegacy } from '../bin/lib/migrate.mjs';
+import { isEntryPoint } from '../bin/lib/entry.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KEYS = new Set(['name', 'description', 'license', 'compatibility', 'allowed-tools', 'metadata']);
@@ -159,7 +160,7 @@ export function validateSkills(root = ROOT) {
   return { errors, warnings };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isEntryPoint(import.meta.url)) {
   const { errors, warnings } = validateSkills(process.argv[2] ? resolve(process.argv[2]) : ROOT);
   for (const message of warnings) console.warn(`AVVISO: ${message}`);
   for (const message of errors) console.error(`ERRORE: ${message}`);
