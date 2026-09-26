@@ -112,7 +112,7 @@ For risky or sprawling work, once implementation is done, Codex can verify the c
 
 ## Bootstrap / install
 
-Run `install.sh` in this skill directory (or verify manually). It ensures the Codex CLI is installed (`npm i -g @openai/codex`) and logged in with the ChatGPT plan (`codex login`, auth_mode `chatgpt` in `${CODEX_HOME:-$HOME/.codex}/auth.json`). The audit flow also requires the **`plan-auditor`** skill installed where Codex reads user skills from, `~/.agents/skills/` (`${CODEX_HOME:-$HOME/.codex}/skills/` is the older, legacy location) — the cleverOps installer sets up both.
+Run `install.sh` in this skill directory (or verify manually). It ensures the Codex CLI is installed (`npm i -g @openai/codex`) and logged in with the ChatGPT plan (`codex login`, auth_mode `chatgpt` in `${CODEX_HOME:-$HOME/.codex}/auth.json`). The audit flow also requires the **`plan-auditor`** skill installed through the cleverOps installer for the Codex target; let the installer resolve the destination and migrate legacy installations (`npx github:Cleversoft-IT/cleverOps-public doctor` shows what is installed where).
 
 ## Common mistakes
 

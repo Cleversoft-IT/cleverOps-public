@@ -103,6 +103,88 @@ Per evitare fughe di dati:
 - **Se qualcosa di riservato viene pubblicato per errore** è un incidente: cancellare il
   branch non basta, perché i commit restano raggiungibili. Avvisa subito i maintainer.
 
+Per segnalazioni private e gestione degli incidenti vedi [SECURITY.md](SECURITY.md).
+
+### Riprodurre la CI
+
+Dalla radice, con Node 22 (ripetere i test dell'installer anche con Node 18):
+
+```bash
+npm ci
+node scripts/validate-skills.mjs
+npm test
+bash scripts/check-scripts.sh
+```
+
+`npm test` comprende il packaging con `npm pack`, l'installazione dal tarball senza
+`.git`, le migrazioni con fixture sintetiche e i test del controllo di deploy.
+In CI gira su Ubuntu e macOS con Node 18 e 22. `check-scripts.sh` verifica la sintassi
+Bash e Python e lancia ShellCheck (errori e warning), se installato. Per validare i workflow puoi usare
+anche `actionlint`, se disponibile.
+
+La validazione delle skill non richiede dipendenze: controlla frontmatter, corrispondenza
+con il manifest, percorsi fissi e formato/ordinamento degli hash legacy. Accetta YAML
+con stringhe semplici o quotate (escape JSON), descrizioni multilinea e blocchi `|`/`>`,
+`compatibility` come stringa opzionale, `allowed-tools` come stringa o lista,
+`metadata` come mappa di stringhe. Alias, tag e
+strutture più complesse sono rifiutati esplicitamente: usare queste forme standard.
+Oltre 500 righe emette un avviso; gli hash legacy si rigenerano esclusivamente nel
+repository privato, mai nella CI pubblica.
+
+Per il sito, con Node 22:
+
+```bash
+cd site
+npm ci
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+Il catalogo JSON viene rigenerato dal manifest durante typecheck e build; i suoi
+contenuti sono verificati dai test del generatore. L'export statico è in `site/out`.
+Le guardie di riservatezza si riproducono tramite gli hook configurati sopra; i
+controlli sintattici e i test non sostituiscono la denylist locale e Gitleaks.
+
+Gli aggiornamenti settimanali delle dipendenze arrivano da Dependabot
+(`.github/dependabot.yml`) in PR raggruppate su branch `dependabot/**`, che il ruleset
+ammette insieme a `work/**`. Nelle PR di Dependabot i secret Actions non sono
+disponibili: `public-guard` usa la copia della denylist salvata come secret
+**Dependabot** `PUBLIC_GUARD_DENYLIST`, da aggiornare insieme a quella Actions.
+Le guardie restano obbligatorie anche per queste PR.
+
+### Deploy automatico del sito
+
+Il progetto Cloudflare Pages `cleverops` deve già esistere, con branch di produzione
+`main`. Configurare i secret GitHub `CLOUDFLARE_ACCOUNT_ID` e `CLOUDFLARE_API_TOKEN`:
+il token deve avere solo **Cloudflare Pages: Edit** sull'account del progetto.
+Senza uno dei secret il workflow spiega il motivo e il job di deploy viene saltato.
+
+`deploy-site.yml` ascolta il completamento di entrambi i workflow `ci` e `guards`:
+il primo che termina può attendere, il secondo rivaluta i requisiti. Pubblica solo
+dopo il successo di entrambi sulla stessa revisione, verificando anche i singoli
+job `site`, `provenance`, `public-guard` e `gitleaks`. Usa l'artifact identificato
+dal run e dal tentativo CI verificati; un nuovo tentativo fallito non può riusare
+un verde precedente. La concorrenza per ref serializza i deploy senza annullare
+quello in corso; un secondo deploy della stessa revisione è idempotente.
+
+Per ripetere la CI destinata al deploy usare **Re-run all jobs**.
+Con **Re-run failed jobs**, il job `site` già riuscito non viene rieseguito e non
+rigenera l'artifact con il numero del nuovo tentativo: il deploy non parte.
+
+La produzione accetta soltanto push al commit corrente di `main`; le anteprime
+usano `pr-NUMERO` e richiedono una PR aperta dello stesso repository con la testa
+ancora corrispondente ai controlli. Un avanzamento della base non invalida
+l'anteprima: l'artifact è legato al run e allo SHA verificati.
+I fork non vengono pubblicati. Il controllo
+privilegiato viene letto da `main`, e il job di deploy scarica solo l'export statico,
+senza eseguire codice o installazioni npm della PR. Prima della pubblicazione con
+Wrangler `4.141.0`, il workflow rifiuta `_worker.js`, `functions/` e `_routes.json`
+nell'export; `_headers` e `_redirects` sono ammessi. `workflow_run` si attiva quando
+il workflow è presente sul branch predefinito: il primo collaudo remoto avviene
+dopo l'integrazione su `main` e la configurazione dei secret.
+
 ## Licenza
 
 [MIT](LICENSE) © Cleversoft IT
