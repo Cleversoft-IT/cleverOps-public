@@ -12,7 +12,7 @@
     "drupal11-module-development": {"category": "Drupal", "replaces": ["drupal-expert"]},
     "drupal11-performance-caching": {"category": "Drupal"},
     "drupal11-views-and-queries": {"category": "Drupal"},
-    "ionic-skills": {"category": "Mobile"},
+    "ionic-capacitor-app": {"category": "Mobile", "replaces": ["ionic-skills"]},
     "plan-auditor": {"category": "Workflow", "targets": ["codex"]},
     "subagent-dev-with-codex": {"category": "Workflow", "targets": ["claude"]},
     "transcribe-local": {"category": "AI", "replaces": ["transcribe"], "requires": {"path": "~/.whisper-env"}}

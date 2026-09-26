@@ -47,7 +47,7 @@ Il pacchetto non è su npm:
 |---|---|
 | `drupal11-*` (7 skill) | Drupal 11.4: moduli, query/Views, configurazione, cache, theming, deploy/test/sicurezza, migrazioni ([dettagli](docs/drupal11/README.md)) |
 | `drupal-local-env` | Ambiente di sviluppo locale Drupal: DDEV o Docker Compose |
-| `ionic-skills` | App Ionic/Capacitor (in riscrittura come `ionic-capacitor-app`) |
+| `ionic-capacitor-app` | App Ionic 9 + Capacitor 8 (Angular, React, Vue): base, navigazione, push, i18n; acquisti, annunci e onboarding solo se richiesti |
 | `plan-auditor` | Revisione dei piani di implementazione prima di scrivere codice (Codex) |
 | `subagent-dev-with-codex` | Loop cross-model: Claude scrive il piano, Codex lo audita (Claude Code) |
 | `transcribe-local` | Audio → testo con Whisper in locale, senza servizi esterni |
