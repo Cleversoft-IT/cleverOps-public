@@ -35,7 +35,8 @@ while read -r _ local_sha remote_ref remote_sha; do
     node "$guards/check-public.mjs" --range "$remote_sha" "$local_sha" || status=1
     log_opts="$remote_sha..$local_sha"
   fi
+  # -m include i diff dei merge: anche i segreti introdotti soltanto nella risoluzione.
   gitleaks git --redact --no-banner --ignore-gitleaks-allow --config "$guards/.gitleaks.toml" \
-    --gitleaks-ignore-path "$noignore" --log-opts="$log_opts" "$root" || status=1
+    --gitleaks-ignore-path "$noignore" --log-opts="-m $log_opts" "$root" || status=1
 done
 exit $status
