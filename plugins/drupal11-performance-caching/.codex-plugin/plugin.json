@@ -1,6 +1,6 @@
 {
   "name": "drupal11-performance-caching",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Use when working on Drupal 11 cache metadata (tags / contexts / max-age), render array cacheability, lazy builders, BigPipe, page_cache vs dynamic_page_cache, Cache API, Redis or Memcache backends, CacheableResponse, TrustedCallbackInterface.",
   "author": {
     "name": "Cleversoft IT"

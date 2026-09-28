@@ -1,6 +1,6 @@
 {
   "name": "drupal11-frontend-theming",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Use when working on Drupal 11 frontend — Twig 3 templates, Single Directory Components (SDC), custom themes generated via Starterkit, *.info.yml / *.libraries.yml, libraries-override and libraries-extend, preprocess hooks, Olivero / Claro / Stark, jQuery removal (core/once, native dialog).",
   "author": {
     "name": "Cleversoft IT"
