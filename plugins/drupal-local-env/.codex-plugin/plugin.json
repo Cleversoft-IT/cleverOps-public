@@ -1,6 +1,6 @@
 {
   "name": "drupal-local-env",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Use when setting up, running or troubleshooting the local development environment of a Drupal project, either DDEV (.ddev/config.yaml, ddev start / drush / composer, snapshots, add-ons, Mutagen, Xdebug, ddev share, ddev pull) or a plain Docker Compose stack (compose.yaml / docker-compose.yml with PHP-FPM, nginx, MariaDB/MySQL, Redis).",
   "author": {
     "name": "Cleversoft IT"

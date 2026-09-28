@@ -75,11 +75,11 @@ Audit when the plan has 3+ non-trivial steps, touches several files/modules, or 
 
 Use the recipe above (read-only). Do **not** pre-read the codebase to "prep" the auditor — Codex explores itself. Give it only the **absolute path of the plan file** plus the decisions/constraints from the conversation. Don't busy-poll while it works.
 
-### 3. Audit loop until `go` (default cap: 3 rounds = initial + max 2 re-audits)
+### 3. Audit loop until `go` (default cap: 5 rounds = initial + max 4 re-audits)
 
-Read the report. Integrate the material findings into the plan file (or consciously reject them — you own the plan), then re-audit **in the same Codex session** (`codex exec resume <SESSION_ID>`, distinct `-o` file per round). Repeat until the verdict is `go`. If there is still no `go` after 3 total rounds, stop looping and present the plan anyway, surfacing the unresolved findings to the user.
+Read the report. Integrate the material findings into the plan file (or consciously reject them — you own the plan), then re-audit **in the same Codex session** (`codex exec resume <SESSION_ID>`, distinct `-o` file per round). Repeat until the verdict is `go`. If there is still no `go` after 5 total rounds, stop looping and present the plan anyway, surfacing the unresolved findings to the user.
 
-The 3-round cap is the **default**, not a hard limit: if the user explicitly authorizes more rounds ("keep auditing until it's a go"), keep looping past round 3 under that explicit authorization — same-session re-audits, same convergence goal — until the verdict is `go` or the user says to stop.
+The 5-round cap is the **default**, not a hard limit. You may extend it on your own initiative for a particularly important plan, or when the verdict is close to `go` and only minor findings remain and are decreasing. Tell the user why you are extending the loop. The user may also explicitly authorize more rounds ("keep auditing until it's a go"). For any extension, continue same-session re-audits toward `go`, but stop if findings do not decrease from one round to the next. If the loop ends without `go`, present the plan with its open findings.
 
 ### 4. Present the vetted plan
 
@@ -102,7 +102,7 @@ For risky or sprawling work, once implementation is done, Codex can verify the c
 | Task shape | Prefer |
 |---|---|
 | Plan authoring | **The orchestrator** — never delegated |
-| Plan audit (`$plan-auditor`) | Codex's default model, background exec (read-only), loop ≤ 3 rounds by default (more with explicit user go-ahead) |
+| Plan audit (`$plan-auditor`) | Codex's default model, background exec (read-only), loop ≤ 5 rounds by default; extend for an important or nearly approved plan, or with explicit user authorization, while findings decrease |
 | Post-implementation audit vs approved plan | Codex's default model, background exec (read-only), optional |
 | Implementation chunk | Per recorded worker preferences (Anthropic agent or Codex's default model, `-s workspace-write`) |
 | Code review of a chunk | Per recorded worker preferences |
@@ -121,7 +121,7 @@ Run `install.sh` in this skill directory (or verify manually). It ensures the Co
 - **Re-asking preferences every session.** If the project's `CLAUDE.md` records them, use them silently.
 - **Any foreground Codex call for real work.** Bash timeout kills it; you get nothing. Background + file output, always.
 - **Re-auditing in a fresh session instead of `codex exec resume <SESSION_ID>`.** Breaks plan-auditor's fingerprint continuity; `--last` in an orchestrated flow can resume the wrong session.
-- **Audit loop without the round cap.** Plugin bugs or a stubborn auditor can keep the loop from converging; 3 rounds by default, then present with open findings — unless the user has explicitly authorized more rounds, in which case keep going under that authorization.
+- **Audit loop without the round cap or a convergence check.** Plugin bugs or a stubborn auditor can keep the loop from converging; use 5 rounds by default, then present with open findings unless the plan's importance, declining minor findings near `go`, or explicit user authorization warrants more. Explain a self-initiated extension and stop if findings cease to decrease.
 - **Polling without a hard deadline.** A stuck `status` can outlive the finished work. Deadline, then read the output file anyway; canonical transcripts live in `${CODEX_HOME:-$HOME/.codex}/sessions/YYYY/MM/DD/rollout-*.jsonl`.
 - **Pre-exploring the repo to feed the auditor.** Wastes orchestrator context; Codex explores itself.
 - **Pasting the audit verdict unread or auto-applying every finding.** The audit is input, not truth — verify findings against the repo, integrate or consciously reject, then present.
