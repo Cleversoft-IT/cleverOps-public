@@ -1,6 +1,6 @@
 {
   "name": "transcribe-local",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Trascrizione offline/locale di file audio (mp3, wav, m4a, mp4...) con Whisper, senza servizi esterni né chiavi API — ripulendo e formattando il risultato in paragrafi leggibili.",
   "author": {
     "name": "Cleversoft IT"

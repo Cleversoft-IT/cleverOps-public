@@ -1,6 +1,6 @@
 {
   "name": "@cleversoft/cleverops",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Skill e tool DevOps/AI di Cleversoft IT per Claude Code e Codex (Drupal, Ionic, workflow con Codex, trascrizione locale). Installer TUI.",
   "type": "module",
   "bin": {
