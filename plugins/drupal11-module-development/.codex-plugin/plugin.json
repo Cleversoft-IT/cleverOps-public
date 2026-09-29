@@ -1,6 +1,6 @@
 {
   "name": "drupal11-module-development",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Use when writing or modifying custom Drupal 11 module code under modules/custom/ — services, dependency injection, plugins, hooks, controllers, forms, entity types.",
   "author": {
     "name": "Cleversoft IT"

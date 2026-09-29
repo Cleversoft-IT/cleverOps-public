@@ -1,6 +1,6 @@
 {
   "name": "ionic-capacitor-app",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Use when creating, modifying or migrating an Ionic 9 + Capacitor 8 mobile app with Angular, React or Vue - scaffolding, ion-tabs navigation, routing and guards, Preferences storage, dark mode, i18n, push notifications, native sync/build and App Store / Play Store release - plus the optional modules RevenueCat subscriptions and paywalls, AdMob with UMP consent and ATT, and onboarding.",
   "author": {
     "name": "Cleversoft IT"

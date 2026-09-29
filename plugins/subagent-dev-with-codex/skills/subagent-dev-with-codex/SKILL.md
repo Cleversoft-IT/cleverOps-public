@@ -25,7 +25,7 @@ This skill does not hardcode which model implements and who reviews: that is the
 
 - **If worker preferences are already recorded** — in the project's `CLAUDE.md` (look for a `## Subagent worker preferences` section) or stated earlier in this conversation — use them. Do not ask again.
 - **Otherwise**, at the first orchestration decision (after plan approval, before dispatching any worker), ask the user with **one single `AskUserQuestion` call** containing both questions:
-  1. *Default worker for implementation chunks* — offer: an Anthropic top-tier agent (opus), an Anthropic fast agent (sonnet), Codex's default model (overridable with `-m <slug>`), or mixed per task at the orchestrator's judgment (mark this one "(Recommended)").
+  1. *Default worker for implementation chunks* — offer: an Anthropic high-capability agent, an Anthropic fast agent, Codex's default model (overridable with `-m <slug>`), or mixed per task at the orchestrator's judgment (mark this one "(Recommended)").
   2. *Code review of completed chunks* — offer: the orchestrator reviews diffs directly (mark "(Recommended)" — a dispatched same-model reviewer adds latency, not judgment), a dedicated reviewer agent, or a cross-model review via Codex (see *cross-model review* in step 6 below: the reviewer must be a model different from whoever wrote the chunk).
 - After the answers, **offer to persist them**: propose appending a short `## Subagent worker preferences` section to the project's `CLAUDE.md` so future sessions skip the question. Only write it if the user accepts.
 - If `AskUserQuestion` is unavailable in the harness, ask the same two questions in chat.

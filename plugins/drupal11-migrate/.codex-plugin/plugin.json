@@ -1,6 +1,6 @@
 {
   "name": "drupal11-migrate",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Use when importing data into Drupal 11 with the Migrate API — writing migration YAML (migrations/*.yml plugins or migrate_plus config entities), CSV sources (migrate_source_csv), JSON/XML/HTTP sources (migrate_plus url with data fetcher/parser), process pipelines (static_map, migration_lookup, sub_process, entity_lookup, entity_generate, skip_on_empty), custom source/process plugins with the MigrateSource / MigrateProcess PHP attributes, running drush migrate:import --update --limit --idlist, migrate:rollback, migrate:reset-status, migrate:messages, debugging stuck or failing migrations, and planning D6/D7 → D11 migrations now that Migrate Drupal is deprecated (11.4) and removed in D12.",
   "author": {
     "name": "Cleversoft IT"

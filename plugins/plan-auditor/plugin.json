@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "plan-auditor",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Audit software implementation plans produced by coding agents before execution, and optionally audit implemented changes against an approved plan after execution.",
   "author": {
     "name": "Cleversoft IT"
